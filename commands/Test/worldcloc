@@ -1,0 +1,59 @@
+const Discord = require("discord.js")
+const pagination = require('discord.js-pagination')
+
+    module.exports = {
+    name: "help2",
+  description: "new help",
+  usage: "",
+  enabled: false,
+  aliases: [""],
+  category: "Utility",
+  memberPermissions: [],
+  botPermissions: [ "SEND_MESSAGES", "EMBED_LINKS" ],
+  //Settings for command
+  nsfw: false,
+  ownerOnly: true,
+  cooldown: 0,
+
+    async execute(client, message, args, data){
+        const moderation = new Discord.MessageEmbed()
+			.setColor('#2f3136')
+			.setTitle('Example Embed')
+			.setThumbnail('https://i.pinimg.com/originals/18/fc/c0/18fcc0328a2f74fef8e26b704d38e3fb.gif')
+			.addField('`;kick`', 'Kicks a member from your server via mention or ID')
+			.addField('`;ban`', 'Bans a member from your server via mention or ID')
+			.addField('`;tempban`', 'TempBans a member from your server via mention or ID')
+			.addField('`;purge`', 'Purges messages')
+			.addField('`;nuke`', 'Nukes specified Channel')
+			.addField('`;lock`', 'locks channel')
+			.addField('`;unlock`', 'unlocks channel')
+			.addField('`;slowmode`', 'puts slowmode on specified channel')
+			.setTimestamp();
+
+		const fun = new Discord.MessageEmbed()
+			.setTitle('Example Embed 2')
+			.setColor('#2f3136')
+			.setThumbnail('https://i.pinimg.com/originals/18/fc/c0/18fcc0328a2f74fef8e26b704d38e3fb.gif')
+			.addField('`;meme`', 'Generates a random meme')
+			.addField('`;8ball`', '8ball')
+			.addField('`;calculate`', 'calculator')
+			.addField('`;shit`', 'ew i stepped in shit')
+			.addField('`;say`', 'makes the bot say something')
+			.addField('`;hug`', 'hugs specified user')
+			.addField('`;slap`', 'slaps specified user')
+			.addField('`;clyde`', 'says something with clyde')
+			.addField('`;fact`', 'Gets A Random Fact About You')
+			.addField('`;spank`', 'Spanks A User')
+			.setTimestamp();
+
+
+
+		const pages = [
+		];
+
+		const emojiList = ['⏪', '⏩'];
+
+		const timeout = '1000000';  // Milli seconds
+		pagination(message, pages, emojiList, timeout)
+    }
+}
