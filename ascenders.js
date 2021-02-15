@@ -9,7 +9,7 @@ mongoose = require("mongoose");
 
 //const client = new Discord.Client({ ws: { properties: { $browser: "Discord Android" }} })
 //const client = new Discord.Client
-const client = new Discord.Client({ disableMentions: 'everyone', partials: ["MESSAGE", "USER", "REACTION"] });
+const client = new Discord.Client({ /*disableMentions: 'everyone',*/ partials: ["MESSAGE", "USER", "REACTION"] });
 
 
 const { DiscordUNO } = require("discord-uno");
@@ -33,6 +33,7 @@ const path = require('path')
 module.exports = client;
 client.commands = new Collection();
 client.aliases = new Collection();
+
 client.categories = fs.readdirSync("./commands/");
 ["command"].forEach(handler => {
   require(`./handlers/${handler}`)(client);
