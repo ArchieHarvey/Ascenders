@@ -7,3 +7,8 @@ models
 modules
 database
 reconDB.js
+util
+events/autorole.js
+events/guildLogs.js
+events/inviteTracker.js
+events/joinMessages.js
