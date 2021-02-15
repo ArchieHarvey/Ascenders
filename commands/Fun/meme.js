@@ -27,7 +27,7 @@ module.exports = {
             .setColor("RANDOM")
             .setImage(image)
             .setTimestamp()
-            .setFooter(`Requested by ${message.author.username} \n©Ascenders 2020`, client.user.displayAvatarURL())
+            .setFooter(`Requested by ${message.author.username} \n©Ascenders 2021`, client.user.displayAvatarURL())
 
         message.channel.send(embed);
     }

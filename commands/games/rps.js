@@ -1,14 +1,14 @@
 const { MessageEmbed, Message } = require("discord.js");
 const rps = ['scissors','rock', 'paper'];
 const res = ['Scissors :v:','Rock :fist:', 'Paper :raised_hand:'];
-
+const archieembed = require('../../util/archieembed')
 module.exports = {
     name: "rps",
-  description: "Play connect 4 against another user",
-  usage: "connectfour <user>",
+  description: "Play rockpaperscissor against me",
+  usage: "rps",
   enabled: true,
-  aliases: ["c4", "cf"],
-  category: "Fun",
+  aliases: [],
+  category: "Games",
   memberPermissions: [],
   botPermissions: [ "SEND_MESSAGES", "EMBED_LINKS" ],
   //Settings for command
@@ -20,7 +20,7 @@ module.exports = {
         let userChoice;
         if (args.length) userChoice = args[0].toLowerCase();
         if (!rps.includes(userChoice)) 
-          return message.channel.send('Please enter rock, paper, or scissors');
+          return archieembed('Please enter rock, paper, or scissors', message.channel);
         userChoice = rps.indexOf(userChoice);
         const botChoice = Math.floor(Math.random()*3);
         let result;

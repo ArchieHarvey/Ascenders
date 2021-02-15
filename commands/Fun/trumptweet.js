@@ -15,27 +15,23 @@ module.exports = {
     nsfw: false,
     ownerOnly: false,
     cooldown: 0,
-  
+
     async execute(client, message, args, data) {
 
-    // Get message
-    if (!args[0]) return archieembed('Please provide a message to tweet', message.channel)
-    let tweet = message.content.slice(message.content.indexOf(args[0]), message.content.length);
-    if (tweet.length > 68) tweet = tweet.slice(0, 65) + '...';
+        // Get message
+        if (!args[0]) return archieembed('Please provide a message to tweet', message.channel)
+        let tweet = message.content.slice(message.content.indexOf(args[0]), message.content.length);
+        if (tweet.length > 68) tweet = tweet.slice(0, 65) + '...';
 
-    try {
-      const res = await fetch('https://nekobot.xyz/api/imagegen?type=trumptweet&text=' + tweet);
-      const img = (await res.json()).message;
-      const embed = new MessageEmbed()
-        .setTitle(':flag_us:  Trump Tweet  :flag_us: ')
-        .setImage(img)
-        .setFooter(message.member.displayName,  message.author.displayAvatarURL({ dynamic: true }))
-        .setTimestamp()
-        .setColor(message.guild.me.displayHexColor);
-      message.channel.send(embed);
-    } catch (err) {
-      message.client.logger.error(err.stack);
-      message.channel.send('Please try again in a few seconds');
+        try {
+            const res = await fetch('https://nekobot.xyz/api/imagegen?type=trumptweet&text=' + tweet);
+            const img = (await res.json()).message;
+            const embed = new MessageEmbed()
+                .setImage(img)
+            message.channel.send(embed);
+        } catch (err) {
+            message.client.logger.error(err.stack);
+            message.channel.send('Please try again in a few seconds');
+        }
     }
-  }
 };

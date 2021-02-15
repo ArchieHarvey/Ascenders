@@ -28,8 +28,9 @@ module.exports = {
                 .addField(':camera: Images', `**\`${data.guild.prefix}help images\`**`, true)
                 .addField('<:information:807542581550383115> Information', `**\`${data.guild.prefix}help information\`**`, true)
                 .addField(':gear: Moderation', `**\`${data.guild.prefix}help moderation\`**`, true)
-                .addField(':tools: Utility', `**\`${data.guild.prefix}help utility\`**`, true)
                 .addField(':musical_note: Music', `**\`${data.guild.prefix}help music\`**`, true)
+                .addField(':tools: Utility', `**\`${data.guild.prefix}help utility\`**`, true)
+                .addField(':gift: Giveaway', `**\`${data.guild.prefix}help giveaway\`**`, true)
                 .addField(':game_die: Uno', `**\`${data.guild.prefix}help uno\`**`, true)
                 .addField(':underage: NSFW', `**\`${data.guild.prefix}help nsfw\`**`, true)
 
@@ -185,7 +186,18 @@ module.exports = {
                 .setTimestamp()
                 .setFooter(`Requested by ${message.author.username} | ©Ascenders 2020`, client.user.displayAvatarURL())
             message.channel.send(music);
-        } else if (args[0] === 'uno') {
+        } else if (args[0] === 'giveaway') {
+            const giveaway = new MessageEmbed()
+                .setAuthor("Giveaway Module Help")
+                .setDescription(`**My Prefix in ${message.guild.name} is \`${data.guild.prefix}\` **`)
+                .addField(`${data.guild.prefix}gstart`, `x`, true)
+                .addField(`${data.guild.prefix}gend`, `x`, true)
+                .addField(`${data.guild.prefix}greroll`, `x`, true)
+                .setTimestamp()
+                .setFooter(`Requested by ${message.author.username} | ©Ascenders 2020`, client.user.displayAvatarURL())
+            message.channel.send(giveaway);
+        }
+        else if (args[0] === 'uno') {
             const uno = new MessageEmbed()
                 .setAuthor("Uno Module Help")
                 .setDescription(`**My Prefix in ${message.guild.name} is \`${data.guild.prefix}\` **

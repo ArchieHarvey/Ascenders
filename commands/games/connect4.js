@@ -7,7 +7,7 @@ module.exports = {
   usage: "connectfour <user>",
   enabled: true,
   aliases: ["c4", "cf"],
-  category: "Fun",
+  category: "Games",
   memberPermissions: [],
   botPermissions: [ "SEND_MESSAGES", "EMBED_LINKS" ],
   //Settings for command

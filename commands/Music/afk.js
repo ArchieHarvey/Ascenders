@@ -4,11 +4,11 @@ const fs = require('fs');
 
 
 module.exports = {
-    name: "afk",
+    name: "24/7",
   description: "24/7",
   usage: "",
   enabled: true,
-  aliases: ["24/7"],
+  aliases: [],
   category: "Music",
   memberPermissions: [],
   botPermissions: [ "SEND_MESSAGES", "EMBED_LINKS" ],

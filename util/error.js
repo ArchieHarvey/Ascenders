@@ -1,5 +1,5 @@
 const { Client, MessageEmbed } = require("discord.js")
-const client = require('../ascenders.js')
+const client = require('../ascenders')
 
 /**
  * Easy to send errors because im lazy to do the same things :p
@@ -15,6 +15,6 @@ module.exports = async (text, channel) => {
     .setDescription(text)
     .setFooter("Something went wrong :(")
     .setTimestamp()
-    .setFooter("© Ascenders 2020 | Music Module")
+    .setFooter("© Ascenders 2021 | Music Module", client.user.displayAvatarURL())
     await channel.send(embed)
 }

@@ -1,5 +1,5 @@
 const { Client, MessageEmbed } = require("discord.js")
-const client = require('discord.js')
+const client = require('../ascenders')
 /**
  * Easy to send errors because im lazy to do the same things :p
  * @param {String} text - Message which is need to send
@@ -9,10 +9,10 @@ module.exports = async (text, channel) => {
 
     
     let embed = new MessageEmbed()
-    .setColor("RANDOM")
+    .setColor("RED")
     .setDescription(text)
     .setTimestamp()
-    .setFooter("©Ascenders 2021 | v2.2.10")
+    .setFooter("©Ascenders 2021 | v2.2.15", client.user.displayAvatarURL())
     await channel.send(embed)
 }
 
