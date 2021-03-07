@@ -18,7 +18,6 @@ client.on('ready', () => {
             `since ${Math.floor(process.uptime() / 60)} minutes`,
             `in ${client.guilds.cache.size} Servers`,
             `Ascender Music`,
-            `Ascender Radio`,
             `with ${(process.memoryUsage().rss / 1024 / 1024).toFixed(2)}MB RAM`
             ]
             
@@ -26,13 +25,13 @@ client.on('ready', () => {
         const status = arrayofstatus[index];
         client.user.setActivity(status, {type: "PLAYING"});
         index++;
-    }, 10000)
+    }, 60000)
 
 
-    const upchannel = client.channels.cache.get('810530165331066942')
+  /*  const upchannel = client.channels.cache.get('810530165331066942')
     const upembed = new MessageEmbed()
         .setThumbnail(client.user.avatarURL())
         .setTitle("Bot Online")
         .setDescription("Hey I am back online")
-    upchannel.send(upembed)
+    upchannel.send(upembed)*/
 });

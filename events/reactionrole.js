@@ -16,20 +16,20 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     if (reaction.message.id == messageid && reaction.emoji.id == `${emote}`) {
         reaction.message.guild.members.fetch(user).then(member => {
-            let embed = new MessageEmbed()
+           /* let embed = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
-                .setDescription(`**It's Looks You Already Have ${reaction.message.guild.roles.cache.get(role).name} Role** `)
+                .setDescription(`**It's Looks You Already Have ${reaction.message.guild.roles.cache.get(role).name}** `)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
                 .setTimestamp()
             if (member.roles.cache.has(role)) return user.send(embed)
             let sucsses = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
-                .setDescription(`You have got the **${reaction.message.guild.roles.cache.get(role).name}** role by reacting in ${reaction.message.guild.name}`)
+                .setDescription(`**${reaction.message.guild.roles.cache.get(role).name}** Has Been added to you on ${reaction.message.guild.name}`)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
-                .setTimestamp()
+                .setTimestamp()*/
 
             member.roles.add(role)
-            return user.send(sucsses)
+            //return user.send(sucsses)
         })
     }
 })
@@ -48,20 +48,20 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     if (reaction.message.id == messageid && reaction.emoji.name == `${emote}`) {
         reaction.message.guild.members.fetch(user).then(member => {
-            let embed = new MessageEmbed()
+           /* let embed = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
-                .setDescription(`**It's Looks You Already Have ${reaction.message.guild.roles.cache.get(role).name} Role** `)
+                .setDescription(`**It's Looks You Already Have ${reaction.message.guild.roles.cache.get(role).name}** `)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
                 .setTimestamp()
             if (member.roles.cache.has(role)) return user.send(embed)
             let sucsses = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
-                .setDescription(`You have got the **${reaction.message.guild.roles.cache.get(role).name}** role by reacting in ${reaction.message.guild.name}`)
+                .setDescription(`**${reaction.message.guild.roles.cache.get(role).name}** Has Been added to you on ${reaction.message.guild.name}`)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
-                .setTimestamp()
+                .setTimestamp()*/
 
             member.roles.add(role)
-            return user.send(sucsses)
+            //return user.send(sucsses)
         })
     }
 })
@@ -82,13 +82,13 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.message.id == messageid && reaction.emoji.id == `${emote}`) {
         reaction.message.guild.members.fetch(user).then(member => {
 
-            let embed = new MessageEmbed()
+           /* let embed = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
                 .setDescription(`**${reaction.message.guild.roles.cache.get(role).name}** Role Removed From You!`)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
-                .setTimestamp()
+                .setTimestamp()*/
             user.send(embed)
-            member.roles.remove(role)
+          //  member.roles.remove(role)
 
         })
     }
@@ -109,13 +109,13 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.message.id == messageid && reaction.emoji.name == `${emote}`) {
         reaction.message.guild.members.fetch(user).then(member => {
 
-            let embed = new MessageEmbed()
+          /*  let embed = new MessageEmbed()
                 .setAuthor(user.username, user.displayAvatarURL())
                 .setDescription(`**${reaction.message.guild.roles.cache.get(role).name}** Role Removed From You!`)
                 .setFooter(reaction.message.guild.name, reaction.message.guild.iconURL())
-                .setTimestamp()
+                .setTimestamp()*/
             user.send(embed)
-            member.roles.remove(role)
+            //member.roles.remove(role)
 
         })
     }

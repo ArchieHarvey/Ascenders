@@ -4,19 +4,16 @@ const config = require("./config.json"),
   fs = require("fs"),
   util = require("util"),
   readdir = util.promisify(fs.readdir),
-  schema = require('./schema')
-mongoose = require("mongoose");
+mongoose = require("mongoose")
 
 //const client = new Discord.Client({ ws: { properties: { $browser: "Discord Android" }} })
 //const client = new Discord.Client
-const client = new Discord.Client({ /*disableMentions: 'everyone',*/ partials: ["MESSAGE", "USER", "REACTION"] });
+const client = new Discord.Client({ partials: ["MESSAGE", "USER", "REACTION"] });
 
 
 const { DiscordUNO } = require("discord-uno");
 
 client.discordUNO = new DiscordUNO("YELLOW");
-
-
 
 client.queue = new Map() ///For Music Bot
 client.events = new Discord.Collection();
@@ -26,8 +23,19 @@ client.data = require("./database/MongoDB.js");
 client.logger = require("./Modules/Logger.js");
 client.tools = require("./Modules/Tools.js");
 
+const { GiveawaysManager } = require('discord-giveaways')
+
+client.giveaways = new GiveawaysManager(client, {
+  storage: './database.json',
+  updateCountdownEvery: 10000,
+  embedColor: '#ff0000',
+  reaction: '🎉'
+})
 
 ////
+
+
+//require("./logger")(client);
 
 const path = require('path')
 module.exports = client;
@@ -35,7 +43,7 @@ client.commands = new Collection();
 client.aliases = new Collection();
 
 client.categories = fs.readdirSync("./commands/");
-["command"].forEach(handler => {
+["command", "distube-handler"].forEach(handler => {
   require(`./handlers/${handler}`)(client);
 });
 
@@ -52,35 +60,6 @@ mongoose.connect(config.mongoDB, {
 
 
 ///
-client.bal = (id) => new Promise(async ful => {
-  const data = await schema.findOne({ id });
-  if (!data) return ful(0);
-  ful(data.coins);
-})
-
-client.add = (id, coins) => {
-  schema.findOne({ id }), async (err, data) => {
-    if (err) throw err;
-    if (data) {
-      data.coins += coins;
-    } else {
-      data = new schema({ id, coins })
-    }
-    data.save();
-  }
-}
-client.rmv = (id, coins) => {
-  schema.findOne({ id }), async (err, data) => {
-    if (err) throw err;
-    if (data) {
-      data.coins -= coins;
-    } else {
-      data = new schema({ id, coins: -coins })
-    }
-    data.save();
-  }
-}
-
 
 
 client.login(config.token)

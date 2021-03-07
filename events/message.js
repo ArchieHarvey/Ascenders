@@ -8,27 +8,7 @@ client.on('message', async message => {
   try {
     //If author is a bot then return
     if (message.author.bot) return;
-    /*if (await db.has(`afk-${message.author.id}+${message.guild.id}`)) {
-      const info = await db.get(`afk-${message.author.id}+${message.guild.id}`)
-      await db.delete(`afk-${message.author.id}+${message.guild.id}`)
-      message.reply({embed: {
-        color: "RANDOM",
-        description: `<@${message.author.id}> Your AFK status have been removed (${info})`,
-        timestamp: new Date()
-    }
-    })
-    }
-    //checking for mentions
-    if (message.mentions.members.first()) {
-      if (await db.has(`afk-${message.mentions.members.first().id}+${message.guild.id}`)) {
-        message.channel.send({embed: {
-          color: "RANDOM",
-          description: `<@${message.mentions.members.first().user.id}>` + "** is AFK\nReason : **" + await db.get(`afk-${message.mentions.members.first().id}+${message.guild.id}`),
-          timestamp: new Date()
-      }
-      })
-      } else return;
-    } else;*/
+  
     //If the message isn't in a guild return following message
     if (!message.guild) {
       return message.channel.send("Please use my commands in your guild as they do not work in direct messages. Using `!help` in your server to get started.")

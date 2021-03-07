@@ -7,7 +7,7 @@ client.on('message', async message => {
     if (message.author.bot) return;
     if (message.mentions.members.first()) {
         //If message mentions someone
-        let results = await afkSchema.find ({ guildId: message.guild.id }) //Find results
+        let results = await afkSchema.find({ guildId: message.guild.id }) //Find results
 
         if (results) { //If results exist sort through each one
             for (let i = 0; i < results.length; i++) {
@@ -21,12 +21,12 @@ client.on('message', async message => {
                         .setColor(message.guild.me.displayColor)
                         .setAuthor(`${user.user.username} Is AFK`, user.user.displayAvatarURL())
                         .setDescription(`\`${afk}\``)
-                        .setFooter(`${moment(timestamp).fromNow()}`))
+                        .setFooter(`Went AFK ${moment(timestamp).fromNow()}`))
                 }
             }
         }
     }
-    let afkResults = await afkSchema.find ({ guildId: message.guild.id }) // Fetch results again
+    let afkResults = await afkSchema.find({ guildId: message.guild.id }) // Fetch results again
     if (afkResults) {
         for (let i = 0; i < afkResults.length; i++) { //Loop through results
             let { userId, timestamp, username } = afkResults[i]
@@ -48,9 +48,9 @@ client.on('message', async message => {
                         .setColor(message.guild.me.displayColor)
                         .setDescription(`**Welcome back, I removed your afk**`))
                 }
+                //}
             }
         }
-    }
 
-}
-)
+    }
+})
