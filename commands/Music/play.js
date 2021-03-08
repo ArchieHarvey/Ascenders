@@ -38,11 +38,7 @@ module.exports = {
           .setFooter("Requested by "+message.author.tag + " | Music Module", message.author.displayAvatarURL({ dynamic: true }))
           .setDescription(`<:denied:811890796806406174> What do you want to play.\nUsage: \`${data.guild.prefix}play <name/URL>\``)
         );
-      message.channel.send(new MessageEmbed()
-        .setColor(ee.color)
-        .setTitle(":mag: Searching Song")
-        .setDescription(`\`\`\`fix\n${text}\n\`\`\``)
-      ).then(msg=>msg.delete({timeout: 3000}).catch(e=>console.log(e.message)))
+      message.channel.send(`:mag: Searching for ${text}`).then(msg=>msg.delete({timeout: 3000}).catch(e=>console.log(e.message)))
       //https://open.spotify.com/track/5nTtCOCds6I0PHMNtqelas
       if(args.join(" ").toLowerCase().includes("spotify") && args.join(" ").toLowerCase().includes("track")){
         getPreview(args.join(" ")).then(result => {
