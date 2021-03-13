@@ -1,0 +1,62 @@
+{
+  "name": "ascenders",
+  "version": "3.0.0",
+  "description": "A Discord.js bot using MongoDB (npm package Mongoose) to create a bot people can use to learn Discord.js",
+  "main": "ascenders.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.4.0",
+    "aki-api": "^5.2.1",
+    "app-store-scraper": "^0.16.3",
+    "ascii-table": "^0.0.9",
+    "atob": "^2.1.2",
+    "canvacord": "^5.1.0",
+    "chalk": "^4.1.0",
+    "common-tags": "^1.8.0",
+    "cpu-stat": "^2.0.1",
+    "danbot-hosting": "^0.1.6",
+    "discord-giveaways": "^4.4.3",
+    "discord-uno": "^2.0.21",
+    "discord-xp": "^1.1.8",
+    "discord.js": "^12.5.1",
+    "discord.js-pagination": "^1.0.3",
+    "distube": "^2.8.10",
+    "ffmpeg-static": "^4.2.7",
+    "google-play-scraper": "^8.0.2",
+    "he": "^1.2.0",
+    "html2markdown": "^1.1.0",
+    "imdb-api": "^4.4.1",
+    "math-expression-evaluator": "^1.3.7",
+    "moment": "^2.29.1",
+    "mongoose": "^5.11.19",
+    "node-superfetch": "^0.1.11",
+    "pretty-ms": "^7.0.1",
+    "random-puppy": "^1.1.0",
+    "reconlx": "^1.2.3",
+    "search-npm-registry": "^2.0.3",
+    "speedtest-net": "^1.5.1",
+    "spotify-url-info": "^2.2.0",
+    "twitter-api.js": "^0.0.12",
+    "txtgen": "^2.2.8",
+    "urban.js": "^2.4.3",
+    "weather-js": "^2.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KSJaay/Alita.git"
+  },
+  "keywords": [
+    "Alita",
+    "discord",
+    "mongo"
+  ],
+  "author": "KSJaay",
+  "license": "GNU General Public License v3.0",
+  "bugs": {
+    "url": "https://github.com/KSJaay/Alita/issues"
+  },
+  "homepage": "https://github.com/KSJaay/Alita#readme"
+}
