@@ -1,1 +1,0 @@
-module.exports = ["general", "games", "moderation", "uno"]
