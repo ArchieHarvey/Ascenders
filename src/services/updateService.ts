@@ -243,20 +243,31 @@ export class UpdateService {
   }
 
   private async performUpdate(): Promise<string> {
-    const commands: Array<[string, string[]]> = [
-      ['git', ['pull', 'origin', config.githubBranch]],
-      ['npm', ['install']],
-      ['npm', ['run', 'build']]
+    const commands: Array<{ command: string; args: string[] }> = [
+      { command: 'git', args: ['pull', 'origin', config.githubBranch] },
+      { command: 'npm', args: ['install'] },
+      { command: 'npm', args: ['run', 'build'] }
     ];
 
     const outputs: string[] = [];
 
-    for (const [command, args] of commands) {
-      const { stdout, stderr } = await this.runCommand(command, args);
-      outputs.push(`$ ${command} ${args.join(' ')}\n${stdout}${stderr ? `\n${stderr}` : ''}`.trim());
+    for (const { command, args } of commands) {
+      const resolvedCommand = this.resolveCommand(command);
+      const { stdout, stderr } = await this.runCommand(resolvedCommand, args);
+      outputs.push(
+        `$ ${command} ${args.join(' ')}\n${stdout}${stderr ? `\n${stderr}` : ''}`.trim()
+      );
     }
 
     return outputs.join('\n\n');
+  }
+
+  private resolveCommand(command: string) {
+    if (process.platform === 'win32') {
+      return `${command}.cmd`;
+    }
+
+    return command;
   }
 
   private runCommand(command: string, args: string[]) {
