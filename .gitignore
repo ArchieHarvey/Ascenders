@@ -1,0 +1,9 @@
+node_modules
+.env
+dist
+npm-debug.log*
+package-lock.json
+.yarn*
+.pnpm*
+.DS_Store
+data/update-state.json
