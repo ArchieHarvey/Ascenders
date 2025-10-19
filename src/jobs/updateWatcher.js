@@ -44,6 +44,9 @@ export const startUpdateWatcher = (client) => {
 
       pendingWorkflow = true;
 
+      const remoteSha = updateInfo.remoteCommit?.sha ?? 'unknown';
+      const remoteMessage = updateInfo.remoteCommit?.message;
+
       const { collector } = await initiateUpdateWorkflow({
         sourceLabel: 'Automatic repository watcher',
         requester: client.user ?? { tag: client.user?.tag ?? 'Bot' },
@@ -53,12 +56,13 @@ export const startUpdateWatcher = (client) => {
             allowedMentions: { parse: [] },
           }),
         summary: [
-          `Automatic watcher detected that repository \`${updateInfo.path}\` is behind by **${updateInfo.status.behindCount}** commit(s).`,
-          'Review the status details and confirm to pull the latest changes.',
+          `Automatic watcher detected new updates for \`${updateInfo.repo.fullName}\`.`,
+          `Latest remote commit: \`${remoteSha}\``,
+          remoteMessage ? `Message: ${remoteMessage}` : null,
+          `Local metadata commit: \`${updateInfo.localCommit ?? 'unknown'}\``,
+          updateInfo.compareUrl ? `Compare: ${updateInfo.compareUrl}` : null,
           '',
-          '```',
-          updateInfo.status.stdout,
-          '```',
+          updateInfo.summary,
         ]
           .filter(Boolean)
           .join('\n')

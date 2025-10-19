@@ -27,12 +27,51 @@ const buildComponentRow = (requestId, disabled = false) =>
       .setDisabled(disabled),
   );
 
-const formatOutput = (label, text) => {
-  if (!text || text === 'No output') {
-    return `**${label}:** No output`;
-  }
-  const value = text.length > 1800 ? `${text.slice(0, 1800)}…` : text;
-  return `**${label}:**\n\`\`\`\n${value}\n\`\`\``;
+const buildSuccessDetails = (result) => {
+  const parts = [
+    `**Path:** \`${result.path}\``,
+    result.repo?.fullName
+      ? `**Repository:** \`${result.repo.fullName}\` (ref \`${result.repo.ref}\`)`
+      : null,
+    result.commit?.sha
+      ? result.commit?.htmlUrl
+        ? `**Commit:** [\`${result.commit.sha}\`](${result.commit.htmlUrl})`
+        : `**Commit:** \`${result.commit.sha}\``
+      : null,
+    result.commit?.message ? `**Message:** ${result.commit.message}` : null,
+    result.commit?.authorName
+      ? `**Author:** ${result.commit.authorName}${
+          result.commit.authorEmail ? ` (<${result.commit.authorEmail}>)` : ''
+        }`
+      : null,
+    result.commit?.committedAt
+      ? `**Committed at:** ${result.commit.committedAt}`
+      : null,
+    result.previousCommit
+      ? `**Previous commit:** \`${result.previousCommit}\``
+      : null,
+    result.compareUrl ? `**Compare:** ${result.compareUrl}` : null,
+    `**Files written:** ${result.filesWritten}`,
+    `**Directories created:** ${result.directoriesCreated}`,
+    `**Entries removed:** ${result.removedEntries}`,
+    result.preserved?.length
+      ? `**Preserved paths:** ${result.preserved.join(', ')}`
+      : null,
+  ];
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+const buildErrorDetails = (error) => {
+  const parts = [
+    `\`${error.message ?? 'Unknown error'}\``,
+    error.url ? `Request URL: ${error.url}` : null,
+    error.status
+      ? `HTTP status: ${error.status} ${error.statusText ?? ''}`.trim()
+      : null,
+  ];
+
+  return parts.filter(Boolean).join('\n');
 };
 
 export const initiateUpdateWorkflow = async ({
@@ -48,9 +87,8 @@ export const initiateUpdateWorkflow = async ({
   const introEmbed = buildInfoEmbed({
     title: 'Repository Update Requested',
     description: [
-      summary ??
-        `A repository update has been requested by **${requesterTag}**.`,
-      'Press **Confirm** to run `git pull` or **Cancel** to abort.',
+      summary ?? `A repository update has been requested by **${requesterTag}**.`,
+      'Press **Confirm** to download and apply the latest code from GitHub, or **Cancel** to abort.',
       'Only superusers can act on the buttons.',
     ].join('\n'),
     footer: {
@@ -91,7 +129,7 @@ export const initiateUpdateWorkflow = async ({
 
       const runningEmbed = buildInfoEmbed({
         title: 'Update In Progress',
-        description: 'Running `git pull`… please wait.',
+        description: 'Downloading repository archive... please wait.',
       });
 
       await message.edit({
@@ -105,13 +143,7 @@ export const initiateUpdateWorkflow = async ({
 
         const successEmbed = buildSuccessEmbed({
           title: 'Repository Update Complete',
-          description: [
-            `**Path:** \`${result.path}\``,
-            formatOutput('stdout', result.stdout),
-            formatOutput('stderr', result.stderr),
-          ]
-            .filter(Boolean)
-            .join('\n\n'),
+          description: buildSuccessDetails(result),
           footer: {
             text: `Confirmed by ${interaction.user.tag}`,
           },
@@ -124,13 +156,8 @@ export const initiateUpdateWorkflow = async ({
         });
       } catch (error) {
         const errorEmbed = buildErrorEmbed({
-        title: 'Repository Update Failed',
-        description: [
-          `Error: \`${error.message ?? 'Unknown error'}\``,
-          error.stderr ? formatOutput('stderr', error.stderr) : null,
-        ]
-            .filter(Boolean)
-            .join('\n\n'),
+          title: 'Repository Update Failed',
+          description: buildErrorDetails(error),
           footer: {
             text: `Confirmed by ${interaction.user.tag}`,
           },
