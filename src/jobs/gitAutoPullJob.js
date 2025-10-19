@@ -36,7 +36,27 @@ const parseInterval = (value) => {
     return defaultIntervalMs;
   }
 
-  const parsed = Number.parseFloat(value);
+  const trimmed = value.trim().toLowerCase();
+
+  const unitMap = {
+    ms: 1,
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+  };
+
+  for (const unit of Object.keys(unitMap)) {
+    if (trimmed.endsWith(unit)) {
+      const numericPart = trimmed.slice(0, -unit.length).trim();
+      const parsed = Number.parseFloat(numericPart);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return defaultIntervalMs;
+      }
+      return Math.round(parsed * unitMap[unit]);
+    }
+  }
+
+  const parsed = Number.parseFloat(trimmed);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return defaultIntervalMs;
   }
