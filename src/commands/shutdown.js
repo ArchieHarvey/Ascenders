@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { isSuperuser } from '../services/roleService.js';
 import { buildErrorEmbed, buildWarningEmbed } from '../utils/embed.js';
 
@@ -15,7 +15,10 @@ export default {
           description: 'Only superusers can shut down the bot.',
         });
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({
+          embeds: [embed],
+          flags: MessageFlags.Ephemeral,
+        });
         return;
       }
 
@@ -24,13 +27,10 @@ export default {
         description: 'The bot is shutting down now.',
       });
 
-      if (interaction.deferred) {
-        await interaction.editReply({ embeds: [embed] });
-      } else if (interaction.replied) {
-        await interaction.followUp({ embeds: [embed] });
-      } else {
-        await interaction.reply({ embeds: [embed] });
-      }
+      await interaction.reply({
+        embeds: [embed],
+        flags: MessageFlags.Ephemeral,
+      });
 
       setTimeout(() => {
         process.exit(0);
@@ -43,11 +43,17 @@ export default {
       });
 
       if (interaction.deferred) {
-        await interaction.editReply({ embeds: [embed], ephemeral: true });
+        await interaction.editReply({ embeds: [embed] });
       } else if (interaction.replied) {
-        await interaction.followUp({ embeds: [embed], ephemeral: true });
+        await interaction.followUp({
+          embeds: [embed],
+          flags: MessageFlags.Ephemeral,
+        });
       } else {
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({
+          embeds: [embed],
+          flags: MessageFlags.Ephemeral,
+        });
       }
     }
   },

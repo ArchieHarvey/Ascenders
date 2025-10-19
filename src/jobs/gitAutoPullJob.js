@@ -5,6 +5,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   Collection,
+  MessageFlags,
 } from 'discord.js';
 import { isSuperuser } from '../services/roleService.js';
 import {
@@ -876,18 +877,29 @@ export const cancelPendingGitUpdate = async ({ actorId, actorTag }) => {
 export const isGitAutoPullButtonInteraction = (interaction) =>
   Boolean(interaction?.isButton?.() && isGitAutoPullCustomId(interaction.customId));
 
-const respondToInteraction = async (interaction, payload) => {
+const respondToInteraction = async (interaction, payload = {}) => {
+  const sanitizePayload = (options, includeFlags) => {
+    const sanitized = { ...options };
+    if ('ephemeral' in sanitized) {
+      delete sanitized.ephemeral;
+    }
+    if (includeFlags) {
+      sanitized.flags = sanitized.flags ?? MessageFlags.Ephemeral;
+    }
+    return sanitized;
+  };
+
   if (interaction.deferred) {
-    await interaction.editReply(payload);
+    await interaction.editReply(sanitizePayload(payload, false));
     return;
   }
 
   if (interaction.replied) {
-    await interaction.followUp(payload);
+    await interaction.followUp(sanitizePayload(payload, true));
     return;
   }
 
-  await interaction.reply(payload);
+  await interaction.reply(sanitizePayload(payload, true));
 };
 
 export const handleGitAutoPullButtonInteraction = async (interaction) => {
@@ -934,7 +946,7 @@ export const handleGitAutoPullButtonInteraction = async (interaction) => {
   }
 
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     if (parsed.action === 'confirm') {
       const result = await confirmPendingGitUpdate({
