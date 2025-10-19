@@ -16,7 +16,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-const defaultIntervalMs = 5 * 60 * 1000; // 5 minutes
+const defaultIntervalMs = 60 * 1000; // 1 minute
 
 const normalizeBoolean = (value, fallback = false) => {
   if (typeof value !== 'string') {
