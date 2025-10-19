@@ -4,27 +4,27 @@ const latencyBands = [
   {
     threshold: 100,
     color: 0x2ecc71,
-    status: 'Excellent (<100ms)',
+    status: 'Excellent',
   },
   {
     threshold: 200,
     color: 0x27ae60,
-    status: 'Good (<200ms)',
+    status: 'Good',
   },
   {
     threshold: 300,
     color: 0xf1c40f,
-    status: 'Moderate (<300ms)',
+    status: 'Moderate',
   },
   {
     threshold: 400,
     color: 0xe67e22,
-    status: 'Slow (<400ms)',
+    status: 'Slow',
   },
   {
     threshold: 500,
     color: 0xe74c3c,
-    status: 'Laggy (<500ms)',
+    status: 'Laggy',
   },
 ];
 
