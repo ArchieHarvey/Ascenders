@@ -92,7 +92,7 @@ const config = {
 };
 
 const buttonPrefix = 'git-auto-pull';
-const restartDelayMs = 3000;
+const restartDelayMs = 0;
 
 const generateToken = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -104,16 +104,11 @@ const scheduleRestart = () => {
     return restartDelayMs;
   }
 
-  console.log(
-    `${logPrefix} Scheduling process restart in ${Math.round(
-      restartDelayMs / 1000,
-    )}s.`,
-  );
+  console.log(`${logPrefix} Crashing process to trigger restart.`);
 
-  restartTimer = setTimeout(() => {
-    console.log(`${logPrefix} Restarting process now.`);
-    process.exit(0);
-  }, restartDelayMs);
+  restartTimer = setImmediate(() => {
+    process.exit(1);
+  });
 
   return restartDelayMs;
 };
