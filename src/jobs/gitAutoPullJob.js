@@ -89,6 +89,10 @@ const config = {
   pullTarget,
   trackingRef,
   displayRef,
+  logChecks: normalizeBoolean(
+    process.env.GIT_AUTO_PULL_LOG_CHECKS,
+    true,
+  ),
 };
 
 const buttonPrefix = 'git-auto-pull';
@@ -561,6 +565,9 @@ const performCheck = async ({ source = 'scheduled', force = false } = {}) => {
 
   state.isChecking = true;
   try {
+    if (config.logChecks) {
+      console.log(`${logPrefix} Performing git check (${source}).`);
+    }
     const status = await fetchRemoteStatus();
     state.lastCheckAt = Date.now();
     state.lastError = null;
