@@ -37,7 +37,7 @@ A minimal Discord bot built with [discord.js](https://discord.js.org/) v14. It d
    - `GIT_AUTO_PULL_CHANNEL_ID` - channel ID where update prompts should be posted
    - `GIT_AUTO_PULL_REPOSITORY_URL` - optional override for the repository URL (defaults to `https://github.com/ArchieHarvey/Ascenders.git`)
    - `GIT_AUTO_PULL_REMOTE` / `GIT_AUTO_PULL_BRANCH` - optional remote name and branch if you prefer a configured git remote instead of the default URL (defaults: `origin` / `main`)
-   - `GIT_AUTO_PULL_INTERVAL_MS` - optional interval override in milliseconds (defaults to 5 minutes)
+   - `GIT_AUTO_PULL_INTERVAL_MS` - optional interval override (milliseconds or seconds when value < 1000, defaults to 5 minutes)
    - `GIT_AUTO_PULL_WORKDIR` - optional absolute path to the local repository (defaults to the bot working directory)
 
 3. Ensure MongoDB is running and accessible via `MONGO_URI`.

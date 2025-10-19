@@ -35,11 +35,17 @@ const parseInterval = (value) => {
   if (!value) {
     return defaultIntervalMs;
   }
-  const parsed = Number.parseInt(value, 10);
+
+  const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return defaultIntervalMs;
   }
-  return parsed;
+
+  if (parsed < 1000) {
+    return Math.round(parsed * 1000);
+  }
+
+  return Math.round(parsed);
 };
 
 const defaultRepositoryUrl = 'https://github.com/ArchieHarvey/Ascenders.git';
@@ -644,9 +650,9 @@ export const initializeGitAutoPull = async (client) => {
   state.initialized = true;
 
   console.log(
-    `${logPrefix} Watching ${config.displayRef} every ${config.intervalMs}ms in ${
-      config.workdir
-    }.`,
+    `${logPrefix} Watching ${config.displayRef} every ${config.intervalMs}ms (${(
+      config.intervalMs / 1000
+    ).toFixed(2)}s) in ${config.workdir}.`,
   );
 
   await ensureChannel();

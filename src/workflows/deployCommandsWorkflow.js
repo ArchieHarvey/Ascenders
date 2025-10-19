@@ -41,8 +41,12 @@ export const initiateDeployCommandsWorkflow = async ({
   const introEmbed = buildInfoEmbed({
     title: 'Slash Command Registration',
     description: [
-      `Requested by **${requesterTag}**${guildInfo}.`,
-      'Choose **Register Global** to update commands everywhere, or **Register Guild** to update only the current server.',
+      `Requested by **${requesterTag}**${guildInfo}`,
+      '',
+      'Select an option:',
+      '• **Register Global** – update commands everywhere',
+      '• **Register Guild** – update only this server',
+      '',
       'Only superusers can press these buttons.',
     ].join('\n'),
     footer: {
