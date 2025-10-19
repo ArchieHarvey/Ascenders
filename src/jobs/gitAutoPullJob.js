@@ -48,6 +48,60 @@ const parseInterval = (value) => {
   return Math.round(parsed);
 };
 
+const parseIstLabelToTimestamp = (label) => {
+  if (!label || label.toLowerCase() === 'never') {
+    return null;
+  }
+
+  const cleaned = label.replace(/\s+IST$/i, '').trim();
+  const [datePart, timePart] = cleaned.split(' ');
+  if (!datePart || !timePart) {
+    return null;
+  }
+
+  const isoCandidate = `${datePart}T${timePart}:00+05:30`;
+  const timestamp = Date.parse(isoCandidate);
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  return timestamp;
+};
+
+const hydrateStateFromTopic = (topic) => {
+  if (!topic) {
+    return;
+  }
+
+  const markerIndex = topic.lastIndexOf(topicMarker);
+  if (markerIndex < 0) {
+    state.lastTopic = topic.trim();
+    return;
+  }
+
+  const statusSection = topic.slice(markerIndex);
+  const lastCheckMatch =
+    /Last check:\s([0-9-]+\s[0-9:]+\sIST|Never)/i.exec(statusSection);
+  const lastPullMatch =
+    /Last pull:\s([0-9-]+\s[0-9:]+\sIST|Never)/i.exec(statusSection);
+
+  if (!state.lastCheckAt && lastCheckMatch?.[1]) {
+    const parsed = parseIstLabelToTimestamp(lastCheckMatch[1]);
+    if (parsed) {
+      state.lastCheckAt = parsed;
+    }
+  }
+
+  if (!state.lastPullAt && lastPullMatch?.[1]) {
+    const parsed = parseIstLabelToTimestamp(lastPullMatch[1]);
+    if (parsed) {
+      state.lastPullAt = parsed;
+    }
+  }
+
+  state.lastTopic = topic.trim();
+};
+
 const defaultRepositoryUrl = 'https://github.com/ArchieHarvey/Ascenders.git';
 
 const rawRemote = process.env.GIT_AUTO_PULL_REMOTE?.trim();
@@ -302,15 +356,17 @@ const ensureChannel = async () => {
       );
       return null;
     }
+    const currentTopic = channel.topic ?? '';
+
     if (state.originalTopic === null && typeof channel.topic === 'string') {
-      const currentTopic = channel.topic ?? '';
       const markerIndex = currentTopic.indexOf(topicMarker);
       state.originalTopic =
         markerIndex >= 0
           ? currentTopic.slice(0, markerIndex).trim()
           : currentTopic.trim();
-      state.lastTopic = currentTopic.trim();
     }
+
+    hydrateStateFromTopic(currentTopic);
     channelCache = channel;
     return channelCache;
   } catch (error) {
