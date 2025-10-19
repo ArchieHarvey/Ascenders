@@ -6,12 +6,12 @@ import {
   ComponentType,
   MessageFlags,
 } from 'discord.js';
-import { isSuperuser } from '../services/roleService.js';
+import { isSuperuser } from '../../services/roleService.js';
 import {
   buildErrorEmbed,
-  buildWarningEmbed,
   buildSuccessEmbed,
-} from '../utils/embed.js';
+  buildWarningEmbed,
+} from '../../utils/embed.js';
 
 const buildRow = (requestId, disabled = false) =>
   new ActionRowBuilder().addComponents(

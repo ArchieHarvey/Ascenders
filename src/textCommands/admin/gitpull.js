@@ -3,14 +3,14 @@ import {
   confirmPendingGitUpdate,
   cancelPendingGitUpdate,
   triggerManualGitCheck,
-} from '../jobs/gitAutoPullJob.js';
-import { isSuperuser } from '../services/roleService.js';
+} from '../../jobs/gitAutoPullJob.js';
+import { isSuperuser } from '../../services/roleService.js';
 import {
   buildErrorEmbed,
   buildInfoEmbed,
   buildSuccessEmbed,
   buildWarningEmbed,
-} from '../utils/embed.js';
+} from '../../utils/embed.js';
 
 const reply = (message, payload) =>
   message.reply({

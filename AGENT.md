@@ -27,5 +27,6 @@ These guidelines capture ongoing expectations for feature work and maintenance. 
 - Always run `npm run deploy` after modifying slash command definitions.
 - Use `npm start` (or `npm run dev`) to validate functionality locally with the updated environment configuration.
 - Maintain `.env.example` parity with runtime expectations (e.g., `SUPERUSER_IDS`, `ADMIN_IDS`, `REPO_PATH`).
+- After wrapping up each task, increment the version in `package.json` before handing it off.
 
 Keep this document in sync with future agreements or project conventions so new contributors ramp up quickly.

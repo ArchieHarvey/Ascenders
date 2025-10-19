@@ -1,5 +1,5 @@
-import { buildInfoEmbed, buildErrorEmbed } from '../utils/embed.js';
-import { formatDuration } from '../utils/time.js';
+import { buildInfoEmbed, buildErrorEmbed } from '../../utils/embed.js';
+import { formatDuration } from '../../utils/time.js';
 
 export default {
   name: 'uptime',

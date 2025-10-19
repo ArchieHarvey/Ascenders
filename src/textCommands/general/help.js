@@ -1,4 +1,4 @@
-import { buildInfoEmbed } from '../utils/embed.js';
+import { buildInfoEmbed } from '../../utils/embed.js';
 
 export default {
   name: 'help',

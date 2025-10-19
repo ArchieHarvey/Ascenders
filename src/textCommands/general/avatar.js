@@ -1,4 +1,4 @@
-import { buildErrorEmbed, buildInfoEmbed } from '../utils/embed.js';
+import { buildErrorEmbed, buildInfoEmbed } from '../../utils/embed.js';
 
 const mentionRegex = /^<@!?(\d+)>$/;
 

@@ -23,19 +23,39 @@ if (!clientId) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const loadJsFiles = (directory) => {
+  if (!fs.existsSync(directory)) {
+    return [];
+  }
+
+  const results = [];
+
+  const traverse = (current) => {
+    for (const dirent of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, dirent.name);
+
+      if (dirent.isDirectory()) {
+        traverse(fullPath);
+        continue;
+      }
+
+      if (dirent.isFile() && dirent.name.toLowerCase().endsWith('.js')) {
+        results.push(fullPath);
+      }
+    }
+  };
+
+  traverse(directory);
+  results.sort((a, b) => a.localeCompare(b));
+  return results;
+};
+
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs
-  .readdirSync(commandsPath, { withFileTypes: true })
-  .filter(
-    (dirent) =>
-      dirent.isFile() && dirent.name.toLowerCase().endsWith('.js'),
-  )
-  .map((dirent) => dirent.name);
+const commandFiles = loadJsFiles(commandsPath);
 
 const commands = [];
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
+for (const filePath of commandFiles) {
   const { default: command } = await import(pathToFileURL(filePath).href);
 
   if (!command?.data || !command?.execute) {

@@ -1,6 +1,6 @@
-import { isSuperuser } from '../services/roleService.js';
-import { buildErrorEmbed } from '../utils/embed.js';
-import { initiateDeployCommandsWorkflow } from '../workflows/deployCommandsWorkflow.js';
+import { isSuperuser } from '../../services/roleService.js';
+import { buildErrorEmbed } from '../../utils/embed.js';
+import { initiateDeployCommandsWorkflow } from '../../workflows/deployCommandsWorkflow.js';
 
 export default {
   name: 'register',

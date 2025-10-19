@@ -1,5 +1,5 @@
-import { isSuperuser } from '../services/roleService.js';
-import { buildErrorEmbed, buildWarningEmbed } from '../utils/embed.js';
+import { isSuperuser } from '../../services/roleService.js';
+import { buildErrorEmbed, buildWarningEmbed } from '../../utils/embed.js';
 
 export default {
   name: 'shutdown',

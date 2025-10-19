@@ -42,19 +42,31 @@ const loadJsFiles = (directory) => {
     return [];
   }
 
-  return fs
-    .readdirSync(directory, { withFileTypes: true })
-    .filter(
-      (dirent) =>
-        dirent.isFile() && dirent.name.toLowerCase().endsWith('.js'),
-    )
-    .map((dirent) => dirent.name);
+  const results = [];
+
+  const traverse = (current) => {
+    for (const dirent of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, dirent.name);
+
+      if (dirent.isDirectory()) {
+        traverse(fullPath);
+        continue;
+      }
+
+      if (dirent.isFile() && dirent.name.toLowerCase().endsWith('.js')) {
+        results.push(fullPath);
+      }
+    }
+  };
+
+  traverse(directory);
+  results.sort((a, b) => a.localeCompare(b));
+  return results;
 };
 
 const commandsPath = path.join(__dirname, 'commands');
 
-for (const file of loadJsFiles(commandsPath)) {
-  const filePath = path.join(commandsPath, file);
+for (const filePath of loadJsFiles(commandsPath)) {
   const { default: command } = await import(pathToFileURL(filePath).href);
 
   if (!command?.data || !command?.execute) {
@@ -70,8 +82,7 @@ for (const file of loadJsFiles(commandsPath)) {
 
 const textCommandsPath = path.join(__dirname, 'textCommands');
 
-for (const file of loadJsFiles(textCommandsPath)) {
-  const filePath = path.join(textCommandsPath, file);
+for (const filePath of loadJsFiles(textCommandsPath)) {
   const { default: command } = await import(pathToFileURL(filePath).href);
 
   if (!command?.name || !command?.execute) {
@@ -94,8 +105,7 @@ for (const file of loadJsFiles(textCommandsPath)) {
 
 const eventsPath = path.join(__dirname, 'events');
 
-for (const file of loadJsFiles(eventsPath)) {
-  const filePath = path.join(eventsPath, file);
+for (const filePath of loadJsFiles(eventsPath)) {
   const { default: event } = await import(pathToFileURL(filePath).href);
 
   if (!event?.name || !event?.execute) {

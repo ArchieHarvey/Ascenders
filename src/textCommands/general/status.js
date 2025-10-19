@@ -2,17 +2,17 @@ import { PermissionsBitField } from 'discord.js';
 import {
   getOrCreateStatus,
   updateStatus,
-} from '../services/botStatusService.js';
+} from '../../services/botStatusService.js';
 import {
   activityKeys,
   applyBotPresence,
   resolveActivityKey,
-} from '../utils/presence.js';
+} from '../../utils/presence.js';
 import {
   buildErrorEmbed,
   buildInfoEmbed,
   buildSuccessEmbed,
-} from '../utils/embed.js';
+} from '../../utils/embed.js';
 
 const formatActivity = (key) =>
   key.charAt(0) + key.slice(1).toLowerCase();
