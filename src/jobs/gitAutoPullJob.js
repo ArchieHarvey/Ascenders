@@ -136,6 +136,8 @@ let channelCache = null;
 let messageCache = new Collection();
 
 const logPrefix = '[GitAutoPull]';
+const IST_OFFSET_MINUTES = 5 * 60 + 30; // UTC+05:30
+const topicMarker = 'Git auto-pull |';
 
 const formatRelativeTimestamp = (value, fallback = 'Never') => {
   if (!value) {
@@ -150,18 +152,22 @@ const formatTopicTimestamp = (value) => {
   if (!value) {
     return 'Never';
   }
-  const date = new Date(value);
+  const istTime = value + IST_OFFSET_MINUTES * 60 * 1000;
+  const date = new Date(istTime);
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
     date.getUTCDate(),
-  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
+  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} IST`;
 };
 
 const buildChannelTopic = () => {
   const base = state.originalTopic?.trim();
-  const prefix = base ? `${base} | ` : 'Git auto-pull | ';
-  return `${prefix}Last check: ${formatTopicTimestamp(
+  const status = `${topicMarker}Last check: ${formatTopicTimestamp(
     state.lastCheckAt,
   )} | Last pull: ${formatTopicTimestamp(state.lastPullAt)}`;
+  if (!base) {
+    return status;
+  }
+  return `${base} | ${status}`;
 };
 
 const updateChannelTopic = async () => {
@@ -292,7 +298,13 @@ const ensureChannel = async () => {
       return null;
     }
     if (state.originalTopic === null && typeof channel.topic === 'string') {
-      state.originalTopic = channel.topic ?? '';
+      const currentTopic = channel.topic ?? '';
+      const markerIndex = currentTopic.indexOf(topicMarker);
+      state.originalTopic =
+        markerIndex >= 0
+          ? currentTopic.slice(0, markerIndex).trim()
+          : currentTopic.trim();
+      state.lastTopic = currentTopic.trim();
     }
     channelCache = channel;
     return channelCache;
@@ -318,20 +330,10 @@ const parseCommits = (logOutput) =>
       };
     });
 
-const buildNotificationEmbed = ({
-  aheadCount,
-  commits,
-  refLabel,
-  lastCheckAt,
-  lastPullAt,
-}) =>
+const buildNotificationEmbed = ({ aheadCount, commits, refLabel }) =>
   buildWarningEmbed({
     title: 'Git updates available',
-    description: [
-      `Detected **${aheadCount}** new commit(s) on \`${refLabel}\`.`,
-      `Last check: ${formatRelativeTimestamp(lastCheckAt, 'Unknown')}`,
-      `Last pull: ${formatRelativeTimestamp(lastPullAt)}`,
-    ].join('\n'),
+    description: `Detected **${aheadCount}** new commit(s) on \`${refLabel}\`.`,
     fields: commits.length
       ? [
           {
@@ -428,13 +430,7 @@ const fetchMessage = async ({ channelId, messageId }) => {
   }
 };
 
-const notifyPendingUpdate = async ({
-  aheadCount,
-  commits,
-  lastCheckAt,
-  lastPullAt,
-  token,
-}) => {
+const notifyPendingUpdate = async ({ aheadCount, commits, token }) => {
   const channel = await ensureChannel();
   if (!channel) {
     return { token };
@@ -447,8 +443,6 @@ const notifyPendingUpdate = async ({
           aheadCount,
           commits,
           refLabel: config.displayRef,
-          lastCheckAt,
-          lastPullAt,
         }),
       ],
       components: [buildButtonRow(token)],
@@ -477,8 +471,6 @@ const updateStateWithPending = async ({ aheadCount, remoteHead, commits }) => {
     (await notifyPendingUpdate({
       aheadCount,
       commits,
-      lastCheckAt: state.lastCheckAt,
-      lastPullAt: state.lastPullAt,
       token,
     })) ?? {};
 

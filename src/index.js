@@ -12,6 +12,16 @@ if (!token) {
   process.exit(1);
 }
 
+const processManager =
+  process.env.PROCESS_MANAGER?.trim().toLowerCase() ?? '';
+
+if (processManager !== 'pm2') {
+  console.error(
+    'PROCESS_MANAGER must be set to "pm2" in the environment. Shutting down.',
+  );
+  process.exit(1);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

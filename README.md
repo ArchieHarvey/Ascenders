@@ -32,6 +32,7 @@ A minimal Discord bot built with [discord.js](https://discord.js.org/) v14. It d
    - `MONGO_URI` - connection string for your MongoDB database
    - `SUPERUSER_IDS` - optional comma-separated Discord IDs that can run elevated commands
    - `ADMIN_IDS` - optional comma-separated Discord IDs treated as admins
+   - `PROCESS_MANAGER` - must be set to `pm2` (the bot will refuse to start otherwise)
    - `GIT_AUTO_PULL_ENABLED` - set to `true` to activate the git watcher (disabled by default)
    - `GIT_AUTO_PULL_CHANNEL_ID` - channel ID where update prompts should be posted
    - `GIT_AUTO_PULL_REPOSITORY_URL` - optional override for the repository URL (defaults to `https://github.com/ArchieHarvey/Ascenders.git`)
