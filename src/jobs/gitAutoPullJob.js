@@ -1,7 +1,17 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { Collection } from 'discord.js';
-import { buildWarningEmbed, buildSuccessEmbed } from '../utils/embed.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  Collection,
+} from 'discord.js';
+import { isSuperuser } from '../services/roleService.js';
+import {
+  buildWarningEmbed,
+  buildSuccessEmbed,
+  buildErrorEmbed,
+} from '../utils/embed.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -81,6 +91,33 @@ const config = {
   displayRef,
 };
 
+const buttonPrefix = 'git-auto-pull';
+const restartDelayMs = 3000;
+
+const generateToken = () =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+let restartTimer = null;
+
+const scheduleRestart = () => {
+  if (restartTimer) {
+    return restartDelayMs;
+  }
+
+  console.log(
+    `${logPrefix} Scheduling process restart in ${Math.round(
+      restartDelayMs / 1000,
+    )}s.`,
+  );
+
+  restartTimer = setTimeout(() => {
+    console.log(`${logPrefix} Restarting process now.`);
+    process.exit(0);
+  }, restartDelayMs);
+
+  return restartDelayMs;
+};
+
 const state = {
   initialized: false,
   pendingUpdate: null,
@@ -146,6 +183,58 @@ const updateChannelTopic = async () => {
   } catch (error) {
     console.error(
       `${logPrefix} Failed to update channel topic for ${channel.id}:`,
+      error,
+    );
+  }
+};
+
+const parseButtonCustomId = (customId) => {
+  if (typeof customId !== 'string') {
+    return null;
+  }
+  const segments = customId.split(':');
+  if (segments.length !== 3) {
+    return null;
+  }
+
+  const [prefix, action, token] = segments;
+  if (prefix !== buttonPrefix || !action || !token) {
+    return null;
+  }
+
+  return { action, token };
+};
+
+const isGitAutoPullCustomId = (customId) =>
+  Boolean(parseButtonCustomId(customId));
+
+const buildButtonRow = (token) =>
+  new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${buttonPrefix}:confirm:${token}`)
+      .setLabel('Pull updates')
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId(`${buttonPrefix}:cancel:${token}`)
+      .setLabel('Dismiss')
+      .setStyle(ButtonStyle.Secondary),
+  );
+
+const disablePendingButtons = async (pendingSnapshot) => {
+  if (!pendingSnapshot?.messageId) {
+    return;
+  }
+
+  const message = await fetchMessage(pendingSnapshot);
+  if (!message?.editable || !message.components?.length) {
+    return;
+  }
+
+  try {
+    await message.edit({ components: [] });
+  } catch (error) {
+    console.warn(
+      `${logPrefix} Failed to disable buttons for message ${pendingSnapshot.messageId}:`,
       error,
     );
   }
@@ -344,10 +433,11 @@ const notifyPendingUpdate = async ({
   commits,
   lastCheckAt,
   lastPullAt,
+  token,
 }) => {
   const channel = await ensureChannel();
   if (!channel) {
-    return null;
+    return { token };
   }
 
   try {
@@ -361,27 +451,35 @@ const notifyPendingUpdate = async ({
           lastPullAt,
         }),
       ],
+      components: [buildButtonRow(token)],
     });
 
     rememberMessage(message);
-    return { channelId: message.channel.id, messageId: message.id };
+    return { channelId: message.channel.id, messageId: message.id, token };
   } catch (error) {
     console.error(
       `${logPrefix} Failed to post update notification to channel ${channel.id}:`,
       error,
     );
-    return null;
+    return { token };
   }
 };
 
 const updateStateWithPending = async ({ aheadCount, remoteHead, commits }) => {
   const existingHead = state.pendingUpdate?.remoteHead;
+  const token = generateToken();
+
+  if (state.pendingUpdate) {
+    await disablePendingButtons(state.pendingUpdate);
+  }
+
   const notificationMeta =
     (await notifyPendingUpdate({
       aheadCount,
       commits,
       lastCheckAt: state.lastCheckAt,
       lastPullAt: state.lastPullAt,
+      token,
     })) ?? {};
 
   state.pendingUpdate = {
@@ -392,6 +490,7 @@ const updateStateWithPending = async ({ aheadCount, remoteHead, commits }) => {
     lastCheckAt: state.lastCheckAt,
     lastPullAt: state.lastPullAt,
     notifiedAt: Date.now(),
+    token: notificationMeta.token ?? token,
     ...notificationMeta,
   };
 
@@ -406,8 +505,9 @@ const updateStateWithPending = async ({ aheadCount, remoteHead, commits }) => {
   }
 };
 
-const markAsUpToDate = () => {
+const markAsUpToDate = async () => {
   if (state.pendingUpdate) {
+    await disablePendingButtons(state.pendingUpdate);
     console.log(
       `${logPrefix} Remote branch ${config.displayRef} is now up to date. Clearing pending state.`,
     );
@@ -485,7 +585,7 @@ const performCheck = async ({ source = 'scheduled', force = false } = {}) => {
         await updateStateWithPending(status);
       }
     } else {
-      markAsUpToDate();
+      await markAsUpToDate();
     }
 
     if (status.behindCount > 0) {
@@ -631,6 +731,7 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
     const result = await execGit(['pull', config.pullTarget, config.branch]);
     state.lastPullAt = Date.now();
 
+    await disablePendingButtons(pendingSnapshot);
     state.pendingUpdate = null;
     await updateChannelTopic();
     await announceOutcome({
@@ -644,6 +745,7 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
       }),
     });
     await performCheck({ source: 'post-pull', force: true });
+    const scheduledRestartInMs = scheduleRestart();
 
     return {
       ...result,
@@ -654,6 +756,7 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
       actorTag,
       lastCheckAt: pendingSnapshot.lastCheckAt ?? state.lastCheckAt,
       lastPullAt: state.lastPullAt,
+      scheduledRestartInMs,
     };
   } catch (error) {
     state.lastError = error;
@@ -669,6 +772,7 @@ export const cancelPendingGitUpdate = async ({ actorId, actorTag }) => {
   }
 
   const pendingSnapshot = state.pendingUpdate;
+  await disablePendingButtons(pendingSnapshot);
   state.pendingUpdate = null;
 
   await announceOutcome({
@@ -691,4 +795,137 @@ export const cancelPendingGitUpdate = async ({ actorId, actorTag }) => {
   await updateChannelTopic();
 
   return pendingSnapshot;
+};
+
+export const isGitAutoPullButtonInteraction = (interaction) =>
+  Boolean(interaction?.isButton?.() && isGitAutoPullCustomId(interaction.customId));
+
+const respondToInteraction = async (interaction, payload) => {
+  if (interaction.deferred) {
+    await interaction.editReply(payload);
+    return;
+  }
+
+  if (interaction.replied) {
+    await interaction.followUp(payload);
+    return;
+  }
+
+  await interaction.reply(payload);
+};
+
+export const handleGitAutoPullButtonInteraction = async (interaction) => {
+  const parsed = parseButtonCustomId(interaction.customId);
+
+  if (!parsed) {
+    await respondToInteraction(interaction, {
+      embeds: [
+        buildErrorEmbed({
+          description: 'Invalid git auto-pull action.',
+        }),
+      ],
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (!state.pendingUpdate || state.pendingUpdate.token !== parsed.token) {
+    await respondToInteraction(interaction, {
+      embeds: [
+        buildWarningEmbed({
+          title: 'No pending update',
+          description:
+            'The referenced update is no longer available. Try running `!gitpull check`.',
+        }),
+      ],
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const hasAccess = await isSuperuser(interaction.user.id);
+
+  if (!hasAccess) {
+    await respondToInteraction(interaction, {
+      embeds: [
+        buildErrorEmbed({
+          description: 'Only superusers can manage repository updates.',
+        }),
+      ],
+      ephemeral: true,
+    });
+    return;
+  }
+
+  try {
+    await interaction.deferReply({ ephemeral: true });
+
+    if (parsed.action === 'confirm') {
+      const result = await confirmPendingGitUpdate({
+        actorId: interaction.user.id,
+        actorTag: interaction.user.tag,
+      });
+
+      const restartNotice =
+        typeof result.scheduledRestartInMs === 'number'
+          ? `Restarting in ${(result.scheduledRestartInMs / 1000).toFixed(1)}s.`
+          : 'Restart scheduled.';
+
+      await interaction.editReply({
+        embeds: [
+          buildSuccessEmbed({
+            title: 'Pull confirmed',
+            description: [
+              `Applied updates from \`${result.remoteRef}\`.`,
+              restartNotice,
+            ].join('\n'),
+          }),
+        ],
+      });
+      return;
+    }
+
+    if (parsed.action === 'cancel') {
+      const pendingSnapshot = await cancelPendingGitUpdate({
+        actorId: interaction.user.id,
+        actorTag: interaction.user.tag,
+      });
+
+      await interaction.editReply({
+        embeds: [
+          buildSuccessEmbed({
+            title: 'Update dismissed',
+            description: [
+              `Dismissed pending update for \`${pendingSnapshot.remoteRef}\`.`,
+              `Last check was ${formatRelativeTimestamp(
+                pendingSnapshot.lastCheckAt ?? state.lastCheckAt,
+                'Unknown',
+              )}.`,
+            ].join('\n'),
+          }),
+        ],
+      });
+      return;
+    }
+
+    await interaction.editReply({
+      embeds: [
+        buildWarningEmbed({
+          title: 'Unknown action',
+          description: 'This update action is not recognized.',
+        }),
+      ],
+    });
+  } catch (error) {
+    console.error(`${logPrefix} Failed to handle auto-pull button:`, error);
+    await respondToInteraction(interaction, {
+      embeds: [
+        buildErrorEmbed({
+          description:
+            'Something went wrong while processing the git auto-pull action.',
+        }),
+      ],
+      ephemeral: true,
+    });
+  }
 };

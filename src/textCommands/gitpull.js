@@ -130,10 +130,22 @@ const buildStatusEmbed = () => {
   });
 };
 
-const buildPullResultEmbed = (result) =>
-  buildSuccessEmbed({
+const buildPullResultEmbed = (result) => {
+  const descriptionLines = [
+    `Pulled updates from \`${result.remoteRef}\`.`,
+  ];
+
+  if (typeof result.scheduledRestartInMs === 'number') {
+    descriptionLines.push(
+      `Bot restart scheduled in ${(result.scheduledRestartInMs / 1000).toFixed(
+        1,
+      )}s.`,
+    );
+  }
+
+  return buildSuccessEmbed({
     title: 'Git pull executed',
-    description: `Pulled updates from \`${result.remoteRef}\`.`,
+    description: descriptionLines.join('\n'),
     fields: [
       ...(result.remoteHead
         ? [
@@ -194,6 +206,7 @@ const buildPullResultEmbed = (result) =>
       })(),
     ],
   });
+};
 
 const ensureSuperuser = async (message) => {
   const allowed = await isSuperuser(message.author.id);

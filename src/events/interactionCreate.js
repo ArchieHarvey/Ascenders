@@ -1,9 +1,20 @@
 import { Events } from 'discord.js';
 import { buildErrorEmbed } from '../utils/embed.js';
+import {
+  handleGitAutoPullButtonInteraction,
+  isGitAutoPullButtonInteraction,
+} from '../jobs/gitAutoPullJob.js';
 
 export default {
   name: Events.InteractionCreate,
   async execute(interaction, client) {
+    if (interaction.isButton()) {
+      if (isGitAutoPullButtonInteraction(interaction)) {
+        await handleGitAutoPullButtonInteraction(interaction);
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) {
       return;
     }
