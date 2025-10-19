@@ -28,6 +28,13 @@ const formatCommits = (commits = []) => {
     .join('\n');
 };
 
+const formatRelativeTime = (value, fallback = 'Never') => {
+  if (!value) {
+    return fallback;
+  }
+  return `<t:${Math.floor(value / 1000)}:R>`;
+};
+
 const buildStatusEmbed = () => {
   const status = getGitAutoPullStatus();
 
@@ -72,6 +79,16 @@ const buildStatusEmbed = () => {
       name: 'Tracking ref',
       value: status.trackingRef ? `\`${status.trackingRef}\`` : 'Not available',
     },
+    {
+      name: 'Last check',
+      value: formatRelativeTime(status.lastCheckAt, 'Not yet'),
+      inline: true,
+    },
+    {
+      name: 'Last pull',
+      value: formatRelativeTime(status.lastPullAt),
+      inline: true,
+    },
   ];
 
   if (status.pendingUpdate) {
@@ -84,15 +101,18 @@ const buildStatusEmbed = () => {
         name: 'Remote head',
         value: `\`${status.pendingUpdate.remoteHead}\``,
       },
+      {
+        name: 'Last check (pending)',
+        value: formatRelativeTime(
+          status.pendingUpdate.lastCheckAt ?? status.lastCheckAt,
+          'Unknown',
+        ),
+      },
+      {
+        name: 'Last pull (overall)',
+        value: formatRelativeTime(status.pendingUpdate.lastPullAt ?? status.lastPullAt),
+      },
     );
-  }
-
-  if (status.lastCheckAt) {
-    fields.push({
-      name: 'Last check',
-      value: `<t:${Math.floor(status.lastCheckAt / 1000)}:R>`,
-      inline: true,
-    });
   }
 
   if (status.lastError) {
@@ -120,6 +140,24 @@ const buildPullResultEmbed = (result) =>
             {
               name: 'Remote head',
               value: `\`${result.remoteHead}\``,
+            },
+          ]
+        : []),
+      ...(result.lastCheckAt
+        ? [
+            {
+              name: 'Last check',
+              value: formatRelativeTime(result.lastCheckAt, 'Unknown'),
+              inline: true,
+            },
+          ]
+        : []),
+      ...(result.lastPullAt
+        ? [
+            {
+              name: 'Last pull',
+              value: formatRelativeTime(result.lastPullAt),
+              inline: true,
             },
           ]
         : []),
@@ -210,6 +248,19 @@ export default {
           return;
         }
 
+        const timingFields = [
+          {
+            name: 'Last check',
+            value: formatRelativeTime(result.lastCheckAt, 'Just now'),
+            inline: true,
+          },
+          {
+            name: 'Last pull',
+            value: formatRelativeTime(result.lastPullAt),
+            inline: true,
+          },
+        ];
+
         if (result.aheadCount > 0) {
           await reply(message, {
             embeds: [
@@ -217,6 +268,7 @@ export default {
                 title: 'Updates detected',
                 description: `\`${result.remoteRef}\` is ahead by ${result.aheadCount} commit(s).`,
                 fields: [
+                  ...timingFields,
                   {
                     name: 'Commits',
                     value: formatCommits(result.commits),
@@ -233,6 +285,7 @@ export default {
             buildSuccessEmbed({
               title: 'Repository is up to date',
               description: `\`${result.remoteRef}\` has no new commits.`,
+              fields: timingFields,
             }),
           ],
         });
@@ -279,6 +332,18 @@ export default {
               buildSuccessEmbed({
                 title: 'Pending update dismissed',
                 description: `Cleared pending update for \`${pending.remoteRef}\`.`,
+                fields: [
+                  {
+                    name: 'Last check',
+                    value: formatRelativeTime(pending.lastCheckAt, 'Unknown'),
+                    inline: true,
+                  },
+                  {
+                    name: 'Last pull',
+                    value: formatRelativeTime(pending.lastPullAt),
+                    inline: true,
+                  },
+                ],
               }),
             ],
           });

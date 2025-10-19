@@ -85,9 +85,12 @@ const state = {
   initialized: false,
   pendingUpdate: null,
   lastCheckAt: null,
+  lastPullAt: null,
   lastError: null,
   isChecking: false,
   isPulling: false,
+  lastTopic: null,
+  originalTopic: null,
 };
 
 let clientHandle = null;
@@ -96,6 +99,57 @@ let channelCache = null;
 let messageCache = new Collection();
 
 const logPrefix = '[GitAutoPull]';
+
+const formatRelativeTimestamp = (value, fallback = 'Never') => {
+  if (!value) {
+    return fallback;
+  }
+  return `<t:${Math.floor(value / 1000)}:R>`;
+};
+
+const pad = (value) => value.toString().padStart(2, '0');
+
+const formatTopicTimestamp = (value) => {
+  if (!value) {
+    return 'Never';
+  }
+  const date = new Date(value);
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
+    date.getUTCDate(),
+  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
+};
+
+const buildChannelTopic = () => {
+  const base = state.originalTopic?.trim();
+  const prefix = base ? `${base} | ` : 'Git auto-pull | ';
+  return `${prefix}Last check: ${formatTopicTimestamp(
+    state.lastCheckAt,
+  )} | Last pull: ${formatTopicTimestamp(state.lastPullAt)}`;
+};
+
+const updateChannelTopic = async () => {
+  const channel = await ensureChannel();
+  if (!channel || typeof channel.setTopic !== 'function') {
+    return;
+  }
+
+  const topic = buildChannelTopic();
+  const trimmedTopic = topic.length > 1024 ? topic.slice(0, 1024) : topic;
+
+  if (state.lastTopic === trimmedTopic) {
+    return;
+  }
+
+  try {
+    await channel.setTopic(trimmedTopic);
+    state.lastTopic = trimmedTopic;
+  } catch (error) {
+    console.error(
+      `${logPrefix} Failed to update channel topic for ${channel.id}:`,
+      error,
+    );
+  }
+};
 
 const execGit = async (args) => {
   try {
@@ -148,6 +202,9 @@ const ensureChannel = async () => {
       );
       return null;
     }
+    if (state.originalTopic === null && typeof channel.topic === 'string') {
+      state.originalTopic = channel.topic ?? '';
+    }
     channelCache = channel;
     return channelCache;
   } catch (error) {
@@ -172,10 +229,20 @@ const parseCommits = (logOutput) =>
       };
     });
 
-const buildNotificationEmbed = ({ aheadCount, commits, refLabel }) =>
+const buildNotificationEmbed = ({
+  aheadCount,
+  commits,
+  refLabel,
+  lastCheckAt,
+  lastPullAt,
+}) =>
   buildWarningEmbed({
     title: 'Git updates available',
-    description: `Detected **${aheadCount}** new commit(s) on \`${refLabel}\`.`,
+    description: [
+      `Detected **${aheadCount}** new commit(s) on \`${refLabel}\`.`,
+      `Last check: ${formatRelativeTimestamp(lastCheckAt, 'Unknown')}`,
+      `Last pull: ${formatRelativeTimestamp(lastPullAt)}`,
+    ].join('\n'),
     fields: commits.length
       ? [
           {
@@ -189,7 +256,13 @@ const buildNotificationEmbed = ({ aheadCount, commits, refLabel }) =>
       : [],
   });
 
-const buildConfirmationEmbed = ({ actorTag, result, refLabel }) => {
+const buildConfirmationEmbed = ({
+  actorTag,
+  result,
+  refLabel,
+  lastCheckAt,
+  lastPullAt,
+}) => {
   const outputLines = [];
   if (result.stdout) {
     outputLines.push(result.stdout.trim());
@@ -206,6 +279,16 @@ const buildConfirmationEmbed = ({ actorTag, result, refLabel }) => {
       {
         name: 'Ref',
         value: `\`${refLabel}\``,
+      },
+      {
+        name: 'Last check',
+        value: formatRelativeTimestamp(lastCheckAt, 'Unknown'),
+        inline: true,
+      },
+      {
+        name: 'Last pull',
+        value: formatRelativeTimestamp(lastPullAt),
+        inline: true,
       },
       ...(outputSnippet
         ? [
@@ -256,7 +339,12 @@ const fetchMessage = async ({ channelId, messageId }) => {
   }
 };
 
-const notifyPendingUpdate = async ({ aheadCount, commits }) => {
+const notifyPendingUpdate = async ({
+  aheadCount,
+  commits,
+  lastCheckAt,
+  lastPullAt,
+}) => {
   const channel = await ensureChannel();
   if (!channel) {
     return null;
@@ -269,6 +357,8 @@ const notifyPendingUpdate = async ({ aheadCount, commits }) => {
           aheadCount,
           commits,
           refLabel: config.displayRef,
+          lastCheckAt,
+          lastPullAt,
         }),
       ],
     });
@@ -286,13 +376,23 @@ const notifyPendingUpdate = async ({ aheadCount, commits }) => {
 
 const updateStateWithPending = async ({ aheadCount, remoteHead, commits }) => {
   const existingHead = state.pendingUpdate?.remoteHead;
+  const notificationMeta =
+    (await notifyPendingUpdate({
+      aheadCount,
+      commits,
+      lastCheckAt: state.lastCheckAt,
+      lastPullAt: state.lastPullAt,
+    })) ?? {};
+
   state.pendingUpdate = {
     remoteRef: config.displayRef,
     remoteHead,
     aheadCount,
     commits,
+    lastCheckAt: state.lastCheckAt,
+    lastPullAt: state.lastPullAt,
     notifiedAt: Date.now(),
-    ...((await notifyPendingUpdate({ aheadCount, commits })) ?? {}),
+    ...notificationMeta,
   };
 
   if (existingHead && existingHead !== remoteHead) {
@@ -377,6 +477,8 @@ const performCheck = async ({ source = 'scheduled', force = false } = {}) => {
     const status = await fetchRemoteStatus();
     state.lastCheckAt = Date.now();
     state.lastError = null;
+    status.lastCheckAt = state.lastCheckAt;
+    status.lastPullAt = state.lastPullAt;
 
     if (status.aheadCount > 0) {
       if (state.pendingUpdate?.remoteHead !== status.remoteHead || force) {
@@ -386,11 +488,13 @@ const performCheck = async ({ source = 'scheduled', force = false } = {}) => {
       markAsUpToDate();
     }
 
-  if (status.behindCount > 0) {
-    console.warn(
-      `${logPrefix} Local branch is ahead of remote (${config.displayRef}) by ${status.behindCount} commit(s).`,
-    );
-  }
+    if (status.behindCount > 0) {
+      console.warn(
+        `${logPrefix} Local branch is ahead of remote (${config.displayRef}) by ${status.behindCount} commit(s).`,
+      );
+    }
+
+    await updateChannelTopic();
 
     return status;
   } catch (error) {
@@ -452,6 +556,7 @@ export const initializeGitAutoPull = async (client) => {
   );
 
   await ensureChannel();
+  await updateChannelTopic();
   await performCheck({ source: 'initial', force: true });
   startInterval();
 };
@@ -464,6 +569,8 @@ export const getGitAutoPullStatus = () => {
         aheadCount: state.pendingUpdate.aheadCount,
         commits: state.pendingUpdate.commits?.slice?.(0, 10) ?? [],
         notifiedAt: state.pendingUpdate.notifiedAt,
+        lastCheckAt: state.pendingUpdate.lastCheckAt,
+        lastPullAt: state.pendingUpdate.lastPullAt,
         channelId: state.pendingUpdate.channelId,
         messageId: state.pendingUpdate.messageId,
       }
@@ -485,6 +592,7 @@ export const getGitAutoPullStatus = () => {
     isChecking: state.isChecking,
     isPulling: state.isPulling,
     lastCheckAt: state.lastCheckAt,
+    lastPullAt: state.lastPullAt,
     lastError: state.lastError
       ? {
           message: state.lastError.message,
@@ -521,14 +629,18 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
     }
 
     const result = await execGit(['pull', config.pullTarget, config.branch]);
+    state.lastPullAt = Date.now();
 
     state.pendingUpdate = null;
+    await updateChannelTopic();
     await announceOutcome({
       pendingSnapshot,
       embed: buildConfirmationEmbed({
         actorTag,
         result,
         refLabel: config.displayRef,
+        lastCheckAt: pendingSnapshot.lastCheckAt ?? state.lastCheckAt,
+        lastPullAt: state.lastPullAt,
       }),
     });
     await performCheck({ source: 'post-pull', force: true });
@@ -540,6 +652,8 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
       commits: pendingSnapshot.commits,
       actorId,
       actorTag,
+      lastCheckAt: pendingSnapshot.lastCheckAt ?? state.lastCheckAt,
+      lastPullAt: state.lastPullAt,
     };
   } catch (error) {
     state.lastError = error;
@@ -561,11 +675,20 @@ export const cancelPendingGitUpdate = async ({ actorId, actorTag }) => {
     pendingSnapshot,
     embed: buildSuccessEmbed({
       title: 'Git update dismissed',
-      description: `Update for \`${config.displayRef}\` dismissed by **${
-        actorTag ?? actorId ?? 'Unknown'
-      }**.`,
+      description: [
+        `Update for \`${config.displayRef}\` dismissed by **${
+          actorTag ?? actorId ?? 'Unknown'
+        }**.`,
+        `Last check: ${formatRelativeTimestamp(
+          pendingSnapshot.lastCheckAt ?? state.lastCheckAt,
+          'Unknown',
+        )}`,
+        `Last pull: ${formatRelativeTimestamp(state.lastPullAt)}`,
+      ].join('\n'),
     }),
   });
+
+  await updateChannelTopic();
 
   return pendingSnapshot;
 };
