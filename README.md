@@ -30,11 +30,14 @@ A minimal Discord bot built with [discord.js](https://discord.js.org/) v14. It d
    - `DISCORD_GUILD_ID` - optional; set to a development guild ID for faster slash command deployments
    - `COMMAND_PREFIX` - prefix used for traditional text commands (defaults to `!`)
    - `MONGO_URI` - connection string for your MongoDB database
-   - `SUPERUSER_IDS` - optional comma-separated Discord IDs that can confirm repository updates
-   - `ADMIN_IDS` - optional comma-separated Discord IDs to treat as admins
-   - `REPO_PATH` - optional filesystem path to the Git repository for update operations (defaults to process working directory)
-   - `UPDATE_CHANNEL_ID` - optional text channel where automatic update notifications should be posted
-   - `AUTO_UPDATE_INTERVAL_MINUTES` - optional frequency for auto-update checks (defaults to 15)
+   - `SUPERUSER_IDS` - optional comma-separated Discord IDs that can run elevated commands
+   - `ADMIN_IDS` - optional comma-separated Discord IDs treated as admins
+   - `GIT_AUTO_PULL_ENABLED` - set to `true` to activate the git watcher (disabled by default)
+   - `GIT_AUTO_PULL_CHANNEL_ID` - channel ID where update prompts should be posted
+   - `GIT_AUTO_PULL_REPOSITORY_URL` - optional override for the repository URL (defaults to `https://github.com/ArchieHarvey/Ascenders.git`)
+   - `GIT_AUTO_PULL_REMOTE` / `GIT_AUTO_PULL_BRANCH` - optional remote name and branch if you prefer a configured git remote instead of the default URL (defaults: `origin` / `main`)
+   - `GIT_AUTO_PULL_INTERVAL_MS` - optional interval override in milliseconds (defaults to 5 minutes)
+   - `GIT_AUTO_PULL_WORKDIR` - optional absolute path to the local repository (defaults to the bot working directory)
 
 3. Ensure MongoDB is running and accessible via `MONGO_URI`.
 
@@ -55,9 +58,9 @@ Once the bot is running:
 - Slash commands such as `/ping`, `/roll`, and `/status` are available wherever registered.
 - Text commands use the configured prefix (default `!`) or a direct bot mention, e.g., `!help`, `@Bot ping`, `!roll 20`, `!status set playing Farming mats`.
 - All bot responses are formatted as embeds to keep output consistent and readable.
-- Repository updates can be requested via `/update` or `!update`, which trigger a button-based confirmation flow restricted to superusers.
-- When `UPDATE_CHANNEL_ID` is configured, the bot automatically checks for remote repository updates on the configured interval and posts a confirmation prompt in that channel (still requiring a superuser to confirm the pull).
+- When git auto-pull is enabled the bot checks for remote updates on a schedule, posts a prompt in the configured channel, and waits for a superuser to run `!gitpull confirm` before pulling (defaulting to the public Ascenders repository unless overridden).
 - Superusers can redeploy slash commands from Discord using `/register` or `!register`, then choosing between global or guild scopes via interactive buttons.
+- Use `!gitpull status` (any user) or `!gitpull check|confirm|cancel` (superusers only) to inspect or manage the watcher.
 
 ## Project Structure
 
@@ -65,12 +68,13 @@ Once the bot is running:
 src/
   commands/
     ping.js            # /ping command handler
+    register.js        # /register command deployment handler
     roll.js            # /roll command handler
     status.js          # /status view and update handler
-    register.js        # /register command deployment handler
-    update.js          # /update repository workflow
   database/
     index.js           # MongoDB connection helpers
+  jobs/
+    gitAutoPullJob.js  # Git watcher and confirmation workflow
   events/
     interactionCreate.js # routes slash commands
     messageCreate.js     # routes text commands
@@ -78,21 +82,21 @@ src/
   models/
     botStatus.js       # Mongo schema for bot status
   services/
-    botStatusService.js # status persistence helpers
-    roleService.js      # helper utilities for superuser/admin roles
-    updateService.js    # git pull helper logic
+    botStatusService.js          # status persistence helpers
+    commandDeploymentService.js  # slash command deployment helpers
+    roleService.js               # superuser/admin helpers
   textCommands/
+    gitpull.js         # !gitpull watcher management
     help.js            # !help command handler
     ping.js            # !ping command handler
+    register.js        # !register command deployment handler
     roll.js            # !roll command handler
     status.js          # !status view/update handler
-    register.js        # !register command deployment handler
-    update.js          # !update repository workflow
   utils/
     embed.js           # shared embed builders
     presence.js        # shared presence utilities
   workflows/
-    updateWorkflow.js  # shared confirmation + git workflow
+    deployCommandsWorkflow.js # slash command registration workflow
   registerCommands.js  # deploys slash commands
   index.js             # bot entry point
 ```
