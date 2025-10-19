@@ -1,4 +1,5 @@
 import { ActivityType } from 'discord.js';
+import { getDefaultPrefix } from '../services/guildSettingsService.js';
 
 const ACTIVITY_MAP = {
   LISTENING: ActivityType.Listening,
@@ -19,7 +20,8 @@ export const resolveActivityKey = (value) => {
 };
 
 export const applyBotPresence = (client, status) => {
-  const fallbackMessage = `${client.prefix ?? '!'}help`;
+  const fallbackPrefix = client.defaultPrefix ?? getDefaultPrefix();
+  const fallbackMessage = `${fallbackPrefix}help`;
   const activityKey = resolveActivityKey(status?.activityType) ?? 'LISTENING';
   const activityType = ACTIVITY_MAP[activityKey];
   const message = status?.message?.trim() || fallbackMessage;

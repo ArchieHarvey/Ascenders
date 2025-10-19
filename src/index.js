@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { connectDatabase, disconnectDatabase } from './database/index.js';
+import { getDefaultPrefix } from './services/guildSettingsService.js';
 
 const token = process.env.DISCORD_TOKEN;
 
@@ -35,7 +36,9 @@ const client = new Client({
 
 client.commands = new Collection();
 client.textCommands = new Collection();
-client.prefix = process.env.COMMAND_PREFIX?.trim() ?? '!';
+const defaultPrefix = getDefaultPrefix();
+client.defaultPrefix = defaultPrefix;
+client.prefix = defaultPrefix;
 
 const loadJsFiles = (directory) => {
   if (!fs.existsSync(directory)) {

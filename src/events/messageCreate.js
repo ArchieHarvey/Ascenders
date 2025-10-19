@@ -1,4 +1,8 @@
 import { Events } from 'discord.js';
+import {
+  getDefaultPrefix,
+  getGuildPrefix,
+} from '../services/guildSettingsService.js';
 
 export default {
   name: Events.MessageCreate,
@@ -7,7 +11,15 @@ export default {
       return;
     }
 
-    const prefix = client.prefix ?? '!';
+    const fallbackPrefix = client.defaultPrefix ?? getDefaultPrefix();
+
+    let prefix = fallbackPrefix;
+    try {
+      prefix = await getGuildPrefix(message.guildId);
+    } catch (error) {
+      console.error('Failed to resolve guild prefix, using fallback:', error);
+    }
+
     const content = message.content.trim();
 
     const botMention =

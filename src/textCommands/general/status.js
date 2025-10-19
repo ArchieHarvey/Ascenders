@@ -13,6 +13,10 @@ import {
   buildInfoEmbed,
   buildSuccessEmbed,
 } from '../../utils/embed.js';
+import {
+  getDefaultPrefix,
+  getGuildPrefix,
+} from '../../services/guildSettingsService.js';
 
 const formatActivity = (key) =>
   key.charAt(0) + key.slice(1).toLowerCase();
@@ -25,6 +29,17 @@ export default {
   usage: '[view|set <activity?> <message>]',
   aliases: [],
   async execute(message, args) {
+    const defaultPrefix = message.client?.defaultPrefix ?? getDefaultPrefix();
+    let effectivePrefix = defaultPrefix;
+
+    if (message.guildId) {
+      try {
+        effectivePrefix = await getGuildPrefix(message.guildId);
+      } catch (error) {
+        console.error('Failed to resolve guild prefix for status command:', error);
+      }
+    }
+
     const [firstArg] = args;
 
     if (!firstArg || firstArg.toLowerCase() === 'view') {
@@ -99,7 +114,7 @@ export default {
       const embed = buildErrorEmbed({
         description: [
           'Please provide a status message.',
-          `Usage: \`${message.client.prefix}status set [activity] <message>\``,
+          `Usage: \`${effectivePrefix}status set [activity] <message>\``,
           `Activities: ${activities}`,
         ].join('\n'),
       });
