@@ -57,7 +57,7 @@ Use `npm run dev` for autoreload via `nodemon` during development.
 Once the bot is running:
 
 - Slash commands such as `/ping`, `/roll`, and `/status` are available wherever registered.
-- Text commands use the configured prefix (default `!`) or a direct bot mention, e.g., `!help`, `@Bot ping`, `!roll 20`, `!avatar @User`, `!uptime`, `!status set playing Farming mats`.
+- Text commands use the configured prefix (default `!`) or a direct bot mention, e.g., `!help`, `@Bot ping`, `!roll 20`, `!avatar @User`, `!uptime`, `!shutdown`, `!restart`, `!status set playing Farming mats`.
 - All bot responses are formatted as embeds to keep output consistent and readable.
 - When git auto-pull is enabled the bot checks for remote updates on a schedule, posts a prompt in the configured channel, and waits for a superuser to run `!gitpull confirm` before pulling (defaulting to the public Ascenders repository unless overridden).
 - Superusers can redeploy slash commands from Discord using `/register` or `!register`, then choosing between global or guild scopes via interactive buttons.
@@ -68,6 +68,8 @@ Once the bot is running:
 ```
 src/
   commands/
+    restart.js         # /restart command handler
+    shutdown.js        # /shutdown command handler
     uptime.js          # /uptime command handler
     avatar.js          # /avatar command handler
     ping.js            # /ping command handler
@@ -89,6 +91,8 @@ src/
     commandDeploymentService.js  # slash command deployment helpers
     roleService.js               # superuser/admin helpers
   textCommands/
+    restart.js         # !restart command handler
+    shutdown.js        # !shutdown command handler
     uptime.js          # !uptime command handler
     avatar.js          # !avatar command handler
     gitpull.js         # !gitpull watcher management
