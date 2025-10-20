@@ -4,6 +4,10 @@ import {
   handleGitAutoPullButtonInteraction,
   isGitAutoPullButtonInteraction,
 } from '../jobs/gitAutoPullJob.js';
+import {
+  handlePrefixButtonInteraction,
+  isPrefixButtonInteraction,
+} from '../features/prefix/prefixSessionManager.js';
 
 export default {
   name: Events.InteractionCreate,
@@ -11,7 +15,14 @@ export default {
     if (interaction.isButton()) {
       if (isGitAutoPullButtonInteraction(interaction)) {
         await handleGitAutoPullButtonInteraction(interaction);
+        return;
       }
+
+      if (isPrefixButtonInteraction(interaction)) {
+        await handlePrefixButtonInteraction(interaction);
+        return;
+      }
+
       return;
     }
 

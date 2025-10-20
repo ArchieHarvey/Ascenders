@@ -8,9 +8,16 @@ import {
 } from '../../services/guildSettingsService.js';
 import {
   buildErrorEmbed,
-  buildInfoEmbed,
   buildSuccessEmbed,
 } from '../../utils/embed.js';
+import {
+  buildSessionPayloadFromSession,
+  createPrefixSessionState,
+  formatPrefix,
+  endPrefixSession,
+  registerPrefixSession,
+  scheduleSessionExpiry,
+} from '../../features/prefix/prefixSessionManager.js';
 
 const requiresManageGuild = PermissionsBitField.Flags.ManageGuild;
 
@@ -20,7 +27,6 @@ const reply = (message, payload) =>
     allowedMentions: { repliedUser: false, parse: [] },
   });
 
-const formatPrefix = (value) => `\`${value}\``;
 
 export default {
   name: 'prefix',
@@ -66,45 +72,36 @@ export default {
           getGuildPrefix(message.guildId),
         ]);
 
-        const usingDefault = currentPrefix === defaultPrefix;
-        const fields = [
-          {
-            name: 'Current Prefix',
-            value: formatPrefix(currentPrefix),
-            inline: true,
-          },
-          {
-            name: 'Default Prefix',
-            value: formatPrefix(defaultPrefix),
-            inline: true,
-          },
-        ];
-
-        if (settings?.updatedAt) {
-          fields.push({
-            name: 'Last Updated',
-            value: `<t:${Math.floor(new Date(settings.updatedAt).getTime() / 1000)}:R>`,
-            inline: true,
-          });
-        }
-
-        if (settings?.updatedByTag) {
-          fields.push({
-            name: 'Last Updated By',
-            value: settings.updatedByTag,
-            inline: true,
-          });
-        }
-
-        const embed = buildInfoEmbed({
-          title: 'Server Prefix',
-          description: usingDefault
-            ? 'This server is using the default prefix.'
-            : 'This server has a custom prefix configured.',
-          fields,
+        const session = createPrefixSessionState({
+          guildId: message.guildId,
+          requestedById: message.author.id,
+          requestedByTag: message.author.tag,
+          defaultPrefix,
+          currentPrefix,
+          settings,
         });
 
-        await reply(message, { embeds: [embed] });
+        const responsePayload = buildSessionPayloadFromSession(session, 'view', {
+          expired: false,
+        });
+
+        const sentMessage = await reply(message, responsePayload);
+
+        session.message = sentMessage;
+        session.channel = sentMessage.channel ?? null;
+        registerPrefixSession(sentMessage.id, session);
+
+        if (!scheduleSessionExpiry(session, sentMessage.id)) {
+          const expiryPayload = buildSessionPayloadFromSession(session, 'expired', {
+            expired: true,
+          });
+
+          sentMessage.edit(expiryPayload).catch((error) => {
+            console.error('Failed to finalize prefix controls:', error);
+          });
+
+          endPrefixSession(sentMessage.id);
+        }
         return;
       }
 
@@ -142,11 +139,6 @@ export default {
               {
                 name: 'Current Prefix',
                 value: formatPrefix(effectivePrefix),
-                inline: true,
-              },
-              {
-                name: 'Default Prefix',
-                value: formatPrefix(defaultPrefix),
                 inline: true,
               },
             ],
@@ -220,3 +212,8 @@ export default {
     }
   },
 };
+
+export {
+  handlePrefixButtonInteraction,
+  isPrefixButtonInteraction,
+} from '../../features/prefix/prefixSessionManager.js';
