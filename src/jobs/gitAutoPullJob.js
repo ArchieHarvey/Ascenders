@@ -353,6 +353,17 @@ const runGit = async (args) => {
   return stdout.trim();
 };
 
+// --- NEW HELPER: Always discard local lockfile and clean tree before pulling ---
+const prepareForPullDiscardLockfile = async () => {
+  // If lockfile was rewritten locally, discard it. Ignore errors if file absent.
+  try {
+    await execGit(['restore', 'package-lock.json']);
+  } catch {}
+  // Ensure a pristine working tree (no local changes and no untracked files)
+  await execGit(['reset', '--hard', 'HEAD']);
+  await execGit(['clean', '-fd']);
+};
+
 const ensureChannel = async () => {
   if (!clientHandle) {
     return null;
@@ -805,8 +816,29 @@ export const confirmPendingGitUpdate = async ({ actorId, actorTag }) => {
       throw new Error('No git remote configured.');
     }
 
-    const result = await execGit(['pull', config.pullTarget, config.branch]);
+    // --- NEW: Always discard local lockfile and clean tree before pulling ---
+    await prepareForPullDiscardLockfile();
+
+    // Pull with explicit fast-forward-only strategy
+    const result = await execGit([
+      'pull',
+      '--ff-only',
+      config.pullTarget,
+      config.branch,
+    ]);
+
+    // Record pull time
     state.lastPullAt = Date.now();
+
+    // Reinstall deps exactly from the lockfile; do not rewrite it
+    try {
+      await execFileAsync('npm', ['ci'], {
+        cwd: config.workdir,
+        windowsHide: true,
+      });
+    } catch (npmErr) {
+      console.warn(`${logPrefix} npm ci failed after pull:`, npmErr);
+    }
 
     await disablePendingButtons(pendingSnapshot);
     state.pendingUpdate = null;
