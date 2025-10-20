@@ -8,6 +8,10 @@ import {
   handlePrefixButtonInteraction,
   isPrefixButtonInteraction,
 } from '../features/prefix/prefixSessionManager.js';
+import {
+  handleLoggingComponentInteraction,
+  isLoggingComponentInteraction,
+} from '../features/logging/loggingSessionManager.js';
 
 export default {
   name: Events.InteractionCreate,
@@ -23,6 +27,18 @@ export default {
         return;
       }
 
+      if (isLoggingComponentInteraction(interaction)) {
+        await handleLoggingComponentInteraction(interaction);
+        return;
+      }
+
+      return;
+    }
+
+    if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu()) {
+      if (isLoggingComponentInteraction(interaction)) {
+        await handleLoggingComponentInteraction(interaction);
+      }
       return;
     }
 
