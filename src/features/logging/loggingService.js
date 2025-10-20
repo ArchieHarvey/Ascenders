@@ -256,8 +256,124 @@ const handleMessageDeleteLog = async ({ guild, config, data }) => {
   }
 };
 
+const handleMessageUpdateLog = async ({ guild, config, data }) => {
+  const logChannel = await resolveLogChannel(guild, config.channelId);
+
+  if (!logChannel || !logChannel.isTextBased?.()) {
+    return false;
+  }
+
+  const originChannel = guild.channels.cache.get(data.channelId) ?? null;
+  const originMention = originChannel
+    ? originChannel.toString()
+    : `<#${data.channelId}>`;
+  const channelNameLabel = originChannel?.name ?? data.channelName ?? 'Unknown channel';
+  const channelDescriptor = `${originMention} (${channelNameLabel}) [${data.channelId}]`;
+
+  const fields = [];
+  const beforeContent = data.before?.trim?.() ?? null;
+  const afterContent = data.after?.trim?.() ?? null;
+
+  fields.push({
+    name: 'Before',
+    value: beforeContent
+      ? truncate(beforeContent, 1024)
+      : data.beforePartial
+        ? 'Content unavailable (message cache not available).'
+        : 'No previous content.',
+    inline: false,
+  });
+
+  fields.push({
+    name: 'After',
+    value: afterContent
+      ? truncate(afterContent, 1024)
+      : data.afterPartial
+        ? 'Content unavailable (message cache not available).'
+        : 'No current content.',
+    inline: false,
+  });
+
+  if (Array.isArray(data.attachments) && data.attachments.length > 0) {
+    const attachmentLines = data.attachments
+      .slice(0, 10)
+      .map((attachment) => {
+        if (attachment.url) {
+          const label = attachment.name ?? 'Attachment';
+          return `[${label}](${attachment.url})`;
+        }
+        return attachment.name ?? 'Attachment';
+      })
+      .join('\n');
+
+    fields.push({
+      name: `Attachments (${data.attachments.length})`,
+      value: truncate(attachmentLines, 1024),
+      inline: false,
+    });
+
+    if (data.attachments.length > 10) {
+      fields.push({
+        name: 'More Attachments',
+        value: `+${data.attachments.length - 10} additional attachment(s)`,
+        inline: false,
+      });
+    }
+  }
+
+  fields.push({
+    name: 'Author',
+    value: formatAuthorValue(data.author),
+    inline: true,
+  });
+
+  if (typeof data.createdTimestamp === 'number') {
+    const createdSeconds = Math.floor(data.createdTimestamp / 1000);
+    fields.push({
+      name: 'Created',
+      value: `<t:${createdSeconds}:R> (<t:${createdSeconds}:f>)`,
+      inline: true,
+    });
+  }
+
+  if (typeof data.editedTimestamp === 'number') {
+    const editedSeconds = Math.floor(data.editedTimestamp / 1000);
+    fields.push({
+      name: 'Edited',
+      value: `<t:${editedSeconds}:R> (<t:${editedSeconds}:f>)`,
+      inline: true,
+    });
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(Colors.Orange)
+    .setTitle('Message Edited')
+    .setDescription(
+      data.messageUrl
+        ? `A message was edited in ${channelDescriptor}. [View message](${data.messageUrl})`
+        : `A message was edited in ${channelDescriptor}.`,
+    )
+    .setFields(fields)
+    .setFooter({
+      text: `Server Logger • Message ID: ${data.messageId ?? 'Unknown'}`,
+    })
+    .setTimestamp(new Date());
+
+  try {
+    await logChannel.send({ embeds: [embed] });
+    return true;
+  } catch (error) {
+    console.error(
+      `[ServerLogger] Failed to send message update log to ${logChannel.id}:`,
+      error,
+    );
+    return false;
+  }
+};
+
 const logHandlers = {
   [loggingEvents.MESSAGE_DELETE]: handleMessageDeleteLog,
+  [loggingEvents.MESSAGE_UPDATE]: handleMessageUpdateLog,
 };
 
 export const recordLogEvent = async ({ event, guild, data }) => {
