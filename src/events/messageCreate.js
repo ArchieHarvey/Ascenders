@@ -3,6 +3,7 @@ import {
   getDefaultPrefix,
   getGuildPrefix,
 } from '../services/guildSettingsService.js';
+import { buildInfoEmbed } from '../utils/embed.js';
 
 export default {
   name: Events.MessageCreate,
@@ -38,13 +39,47 @@ export default {
       return;
     }
 
-    const withoutPrefix = content
-      .slice(usedPrefix.length)
-      .trim();
+  const withoutPrefix = content
+    .slice(usedPrefix.length)
+    .trim();
 
-    if (!withoutPrefix) {
-      return;
+  if (!withoutPrefix) {
+    if (botMention) {
+      const isDefaultPrefix = prefix === fallbackPrefix;
+      const textPrefixValue = isDefaultPrefix
+        ? `\`${prefix}\` (default)`
+        : `\`${prefix}\``;
+
+      const embed = buildInfoEmbed({
+        title: `Hey, I'm ${client.user.username}!`,
+        description: [
+          'Use my text commands or slash commands to get things done.',
+          `Try \`${prefix}help\` for classic commands or run \`/help\` to browse slash commands.`,
+        ].join('\n'),
+        fields: [
+          {
+            name: 'Text Command Prefix',
+            value: textPrefixValue,
+            inline: true,
+          },
+          {
+            name: 'Slash Commands',
+            value: '`/prefix`, `/status`, `/help`, and more.',
+            inline: true,
+          },
+        ],
+        footer: {
+          text: 'Need a different prefix? Use /prefix or prefix to open the manager.',
+        },
+      });
+
+      await message.reply({
+        embeds: [embed],
+        allowedMentions: { repliedUser: false, parse: [] },
+      });
     }
+    return;
+  }
 
     const args = withoutPrefix.split(/\s+/);
     const commandName = args.shift()?.toLowerCase();
