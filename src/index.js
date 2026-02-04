@@ -3,7 +3,9 @@ import { readdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { env } from './config/env.js';
+import { loadCommands } from './commands/index.js';
 import { logger } from './services/logger.js';
+import { registerCommands } from './services/registerCommands.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -35,9 +37,18 @@ const loadEvents = async () => {
 };
 
 const start = async () => {
+  const commands = await loadCommands();
+
+  for (const command of commands) {
+    client.commands.set(command.data.name, command);
+  }
+
+  const commandPayload = commands.map((command) => command.data.toJSON());
+  await registerCommands(commandPayload);
   await loadEvents();
   await client.login(env.discordToken);
   logger.info('Discord client login initiated.');
+  logger.info('Startup complete: events loaded and commands registered.');
 };
 
 start().catch((error) => {
