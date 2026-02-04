@@ -1,18 +1,17 @@
-import { logger } from '../services/logger.js';
+import { commandMap } from "../commands/index.js";
+import { logger } from "../services/logger.js";
 
-export default {
-  name: 'interactionCreate',
+export const interactionCreateEvent = {
+  name: "interactionCreate",
   async execute(interaction) {
     if (!interaction.isChatInputCommand()) {
       return;
     }
 
-    const command = interaction.client.commands?.get(interaction.commandName);
-
+    const command = commandMap.get(interaction.commandName);
     if (!command) {
-      logger.warn(`No command handler registered for ${interaction.commandName}.`);
       await interaction.reply({
-        content: 'Command not found.',
+        content: "Unknown command.",
         ephemeral: true,
       });
       return;
@@ -21,18 +20,17 @@ export default {
     try {
       await command.execute(interaction);
     } catch (error) {
-      logger.error(
-        `Error executing ${interaction.commandName}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      const reply = {
-        content: 'There was an error while executing this command.',
-        ephemeral: true,
-      };
-
-      if (interaction.deferred || interaction.replied) {
-        await interaction.followUp(reply);
+      logger.error("Command execution failed.", { error: error?.message });
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: "Something went wrong while running that command.",
+          ephemeral: true,
+        });
       } else {
-        await interaction.reply(reply);
+        await interaction.reply({
+          content: "Something went wrong while running that command.",
+          ephemeral: true,
+        });
       }
     }
   },

@@ -1,5 +1,13 @@
+const timestamp = () => new Date().toISOString();
+
 export const logger = {
-  info: (message) => console.log(`[info] ${message}`),
-  warn: (message) => console.warn(`[warn] ${message}`),
-  error: (message) => console.error(`[error] ${message}`),
+  info(message, meta = {}) {
+    console.log(`[${timestamp()}] INFO`, message, meta);
+  },
+  warn(message, meta = {}) {
+    console.warn(`[${timestamp()}] WARN`, message, meta);
+  },
+  error(message, meta = {}) {
+    console.error(`[${timestamp()}] ERROR`, message, meta);
+  },
 };
