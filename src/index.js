@@ -1,25 +1,23 @@
-import { env } from './config/env.js';
-import { loadCommands } from './commands/index.js';
-import { client, loadEvents } from './bot.js';
-import { logger } from './services/logger.js';
-import { registerCommands } from './services/registerCommands.js';
+import { Client, GatewayIntentBits } from "discord.js";
+import { config } from "./config/index.js";
+import { readyEvent } from "./events/ready.js";
+import { interactionCreateEvent } from "./events/interactionCreate.js";
+import { GitUpdater } from "./services/gitUpdater.js";
+import { logger } from "./services/logger.js";
 
-const start = async () => {
-  const commands = await loadCommands();
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-  for (const command of commands) {
-    client.commands.set(command.data.name, command);
-  }
+client.once(readyEvent.name, (...args) => readyEvent.execute(...args));
+client.on(interactionCreateEvent.name, (...args) =>
+  interactionCreateEvent.execute(...args)
+);
 
-  const commandPayload = commands.map((command) => command.data.toJSON());
-  await registerCommands(commandPayload);
-  await loadEvents();
-  await client.login(env.discordToken);
-  logger.info('Discord client login initiated.');
-  logger.info('Startup complete: events loaded and commands registered.');
-};
+const gitUpdater = new GitUpdater({ intervalMs: config.updateCheckIntervalMs });
+client.gitUpdater = gitUpdater;
 
-start().catch((error) => {
-  logger.error(error instanceof Error ? error.message : String(error));
+gitUpdater.start();
+
+client.login(config.token).catch((error) => {
+  logger.error("Failed to login.", { error: error?.message });
   process.exit(1);
 });
