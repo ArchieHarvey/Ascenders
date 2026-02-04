@@ -1,28 +1,6 @@
-import { readdir } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { logger } from '../services/logger.js';
+import { pingCommand } from "./ping.js";
+import { updateCommand } from "./update.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+export const commands = [pingCommand, updateCommand];
 
-export const loadCommands = async () => {
-  const commandFiles = (await readdir(__dirname)).filter(
-    (file) => file.endsWith('.js') && file !== 'index.js',
-  );
-  const commands = [];
-
-  for (const file of commandFiles) {
-    const fileUrl = pathToFileURL(join(__dirname, file));
-    const commandModule = await import(fileUrl);
-    const { data, execute } = commandModule;
-
-    if (!data || typeof execute !== 'function') {
-      logger.warn(`Skipping command file ${file} because it is missing required exports.`);
-      continue;
-    }
-
-    commands.push({ data, execute });
-  }
-
-  return commands;
-};
+export const commandMap = new Map(commands.map((command) => [command.data.name, command]));
