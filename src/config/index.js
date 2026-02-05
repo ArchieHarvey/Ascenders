@@ -25,4 +25,10 @@ export const config = {
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean),
+  worldClockChannelId: process.env.WORLD_CLOCK_CHANNEL_ID || null,
+  worldClockTimezone: process.env.WORLD_CLOCK_TIMEZONE || "UTC",
+  worldClockIntervalMs: parseNumber(process.env.WORLD_CLOCK_INTERVAL_MS, 60_000),
+  worldClockNamePrefix: process.env.WORLD_CLOCK_NAME_PREFIX || "🕒",
+  mongodbUri: process.env.MONGODB_URI || null,
+  mongodbDbName: process.env.MONGODB_DB_NAME || null,
 };
