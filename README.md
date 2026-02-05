@@ -7,6 +7,7 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 - `/avatar [user] [id]` with global/server pages, requester-only page buttons, and download links in a single embed
 - `/update check` to detect git updates
 - `/update apply confirm:true` to pull updates and restart (requires a process manager)
+- `/restart confirm:true` owner-only bot restart
 - Automatic remote update checks with owner approval buttons in a configured channel
 - Optional voice world clock updater that can rename a voice channel on an interval
 
