@@ -1,6 +1,6 @@
 {
   "name": "ascenders-bot",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Discord.js bot with basic slash commands and git update workflow",
   "type": "module",
   "main": "src/index.js",

@@ -8,6 +8,7 @@ import {
 
 const AVATAR_SIZE = 4096;
 const COLLECTOR_TIMEOUT_MS = 60_000;
+const DISCORD_ID_REGEX = /^\d{17,20}$/;
 
 const isAnimatedHash = (hash) => typeof hash === "string" && hash.startsWith("a_");
 
@@ -55,7 +56,7 @@ const buildScopeData = ({ targetUser, targetMember, scope }) => {
   };
 };
 
-const buildEmbed = ({ scopeData, targetUser, requester }) => {
+const buildEmbeds = ({ scopeData, targetUser, requester }) => {
   const scopeLabel = scopeData.scope === "server" ? "server" : "global";
   const downloadLinks = [
     `[PNG](${scopeData.png})`,
@@ -67,14 +68,16 @@ const buildEmbed = ({ scopeData, targetUser, requester }) => {
     downloadLinks.push(`[GIF](${scopeData.gif})`);
   }
 
-  return new EmbedBuilder()
-    .setDescription(
-      [`## <@${targetUser.id}>’s ${scopeLabel} avatar`, `Download: ${downloadLinks.join(" • ")}`].join(
-        "\n\n"
-      )
-    )
+  const avatarEmbed = new EmbedBuilder()
+    .setTitle(`${targetUser.username}'s ${scopeLabel} avatar`)
     .setImage(scopeData.base)
     .setFooter({ text: `Requested by @${requester.username}` });
+
+  const linksEmbed = new EmbedBuilder().setDescription(
+    `Download: ${downloadLinks.join(" • ")}`
+  );
+
+  return [avatarEmbed, linksEmbed];
 };
 
 const buildComponents = ({ scopeData, requesterId, targetUserId }) => {
@@ -123,9 +126,47 @@ export const avatarCommand = {
     .setDescription("View a user's global and server avatar.")
     .addUserOption((option) =>
       option.setName("user").setDescription("The user to view avatar for.").setRequired(false)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("id")
+        .setDescription("User ID to fetch avatar for (works outside this server).")
+        .setRequired(false)
     ),
   async execute(interaction) {
-    const targetUser = interaction.options.getUser("user") ?? interaction.user;
+    const selectedUser = interaction.options.getUser("user");
+    const providedId = interaction.options.getString("id");
+
+    if (selectedUser && providedId) {
+      await interaction.reply({
+        embeds: [errorEmbed("Use either `user` or `id`, not both.")],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    let targetUser = selectedUser ?? interaction.user;
+
+    if (providedId) {
+      if (!DISCORD_ID_REGEX.test(providedId)) {
+        await interaction.reply({
+          embeds: [errorEmbed("That user ID format looks invalid.")],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      try {
+        targetUser = await interaction.client.users.fetch(providedId, { force: true });
+      } catch {
+        await interaction.reply({
+          embeds: [errorEmbed("I couldn't find a user with that ID.")],
+          ephemeral: true,
+        });
+        return;
+      }
+    }
+
     const targetMember = interaction.guild
       ? await interaction.guild.members.fetch(targetUser.id).catch(() => null)
       : null;
@@ -133,13 +174,11 @@ export const avatarCommand = {
     let scopeData = buildScopeData({ targetUser, targetMember, scope: "global" });
 
     await interaction.reply({
-      embeds: [
-        buildEmbed({
-          scopeData,
-          targetUser,
-          requester: interaction.user,
-        }),
-      ],
+      embeds: buildEmbeds({
+        scopeData,
+        targetUser,
+        requester: interaction.user,
+      }),
       components: buildComponents({
         scopeData,
         requesterId: interaction.user.id,
@@ -178,13 +217,11 @@ export const avatarCommand = {
       });
 
       await buttonInteraction.update({
-        embeds: [
-          buildEmbed({
-            scopeData,
-            targetUser,
-            requester: interaction.user,
-          }),
-        ],
+        embeds: buildEmbeds({
+          scopeData,
+          targetUser,
+          requester: interaction.user,
+        }),
         components: buildComponents({
           scopeData,
           requesterId: interaction.user.id,

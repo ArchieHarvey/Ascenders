@@ -4,7 +4,7 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 
 ## Features
 - `/ping` command
-- `/avatar [user]` with global/server pages, requester-only page buttons, and download links inside the embed
+- `/avatar [user] [id]` with global/server pages, requester-only page buttons, and download links in a second embed
 - `/update check` to detect git updates
 - `/update apply confirm:true` to pull updates and restart (requires a process manager)
 - Automatic remote update checks with owner approval buttons in a configured channel
