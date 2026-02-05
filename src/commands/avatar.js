@@ -57,10 +57,24 @@ const buildScopeData = ({ targetUser, targetMember, scope }) => {
 
 const buildEmbed = ({ scopeData, targetUser, requester }) => {
   const scopeLabel = scopeData.scope === "server" ? "server" : "global";
+  const downloadLinks = [
+    `[PNG](${scopeData.png})`,
+    `[JPG](${scopeData.jpg})`,
+    `[WEBP](${scopeData.webp})`,
+  ];
+
+  if (scopeData.gif) {
+    downloadLinks.push(`[GIF](${scopeData.gif})`);
+  }
+
   return new EmbedBuilder()
-    .setDescription(`<@${targetUser.id}>’s ${scopeLabel} avatar`)
+    .setDescription(
+      [`## <@${targetUser.id}>’s ${scopeLabel} avatar`, `Download: ${downloadLinks.join(" • ")}`].join(
+        "\n\n"
+      )
+    )
     .setImage(scopeData.base)
-    .setFooter({ text: `Requested by @${requester.username} • ID: ${targetUser.id}` });
+    .setFooter({ text: `Requested by @${requester.username}` });
 };
 
 const buildComponents = ({ scopeData, requesterId, targetUserId }) => {
@@ -70,30 +84,16 @@ const buildComponents = ({ scopeData, requesterId, targetUserId }) => {
     new ButtonBuilder()
       .setCustomId(`avatar:page:global:${requesterId}:${targetUserId}`)
       .setLabel("Global")
-      .setStyle(ButtonStyle.Primary)
+      .setStyle(isGlobal ? ButtonStyle.Success : ButtonStyle.Secondary)
       .setDisabled(isGlobal),
     new ButtonBuilder()
       .setCustomId(`avatar:page:server:${requesterId}:${targetUserId}`)
       .setLabel("Server")
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(isGlobal ? ButtonStyle.Secondary : ButtonStyle.Success)
       .setDisabled(!isGlobal)
   );
 
-  const links = [
-    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("PNG").setURL(scopeData.png),
-    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("JPG").setURL(scopeData.jpg),
-    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("WEBP").setURL(scopeData.webp),
-  ];
-
-  if (scopeData.gif) {
-    links.push(
-      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("GIF").setURL(scopeData.gif)
-    );
-  }
-
-  const linkRow = new ActionRowBuilder().addComponents(links);
-
-  return [pageRow, linkRow];
+  return [pageRow];
 };
 
 const parseAvatarButton = (customId) => {
