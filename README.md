@@ -20,5 +20,5 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 - Set `UPDATE_ALERT_CHANNEL_ID` to the channel where update approval prompts should be sent.
 - Commands are auto-registered on each bot restart.
 - `/avatar` page buttons expire after 1 minute and are then removed from the message.
-- Run `npm run hooks:install` once to auto-bump `package.json` version on every commit/code change.
+- Run `npm run hooks:install` once to auto-bump `package.json` semver from commit message (`feat` = minor, `BREAKING CHANGE`/`!` = major, otherwise patch).
 - Use a process manager (PM2, systemd, Docker) to restart the bot after it exits.
