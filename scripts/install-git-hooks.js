@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const gitDir = resolve(root, ".git");
 const hooksDir = resolve(gitDir, "hooks");
-const hookPath = resolve(hooksDir, "pre-commit");
+const hookPath = resolve(hooksDir, "commit-msg");
 
 try {
   await access(gitDir, constants.F_OK);
@@ -18,11 +18,11 @@ await mkdir(hooksDir, { recursive: true });
 
 const hookScript = `#!/usr/bin/env bash
 set -euo pipefail
-node scripts/bump-version.js
+node scripts/bump-version.js --detect --from-commit-msg-file "$1"
 
 git add package.json
 `;
 
 await writeFile(hookPath, hookScript, { mode: 0o755 });
 
-console.log("Installed git pre-commit hook for automatic package version bumping.");
+console.log("Installed git commit-msg hook for automatic semantic version bumping.");
