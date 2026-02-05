@@ -1,12 +1,13 @@
 {
   "name": "ascenders-bot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Discord.js bot with basic slash commands and git update workflow",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "deploy:commands": "node scripts/deploy-commands.js"
+    "deploy:commands": "node scripts/deploy-commands.js",
+    "hooks:install": "node scripts/install-git-hooks.js"
   },
   "dependencies": {
     "discord.js": "^14.16.3",
