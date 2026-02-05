@@ -71,13 +71,10 @@ const buildEmbeds = ({ scopeData, targetUser, requester }) => {
   const avatarEmbed = new EmbedBuilder()
     .setTitle(`${targetUser.username}'s ${scopeLabel} avatar`)
     .setImage(scopeData.base)
+    .setDescription(`Download: ${downloadLinks.join(" • ")}`)
     .setFooter({ text: `Requested by @${requester.username}` });
 
-  const linksEmbed = new EmbedBuilder().setDescription(
-    `Download: ${downloadLinks.join(" • ")}`
-  );
-
-  return [avatarEmbed, linksEmbed];
+  return [avatarEmbed];
 };
 
 const buildComponents = ({ scopeData, requesterId, targetUserId }) => {
