@@ -19,6 +19,7 @@ export const config = {
   token: process.env.DISCORD_TOKEN,
   clientId: process.env.CLIENT_ID,
   guildId: process.env.GUILD_ID || null,
+  updateAlertChannelId: process.env.UPDATE_ALERT_CHANNEL_ID || null,
   updateCheckIntervalMs: parseNumber(process.env.UPDATE_CHECK_INTERVAL_MS, 300_000),
   ownerIds: (process.env.BOT_OWNER_IDS || "")
     .split(",")

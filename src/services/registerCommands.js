@@ -1,20 +1,23 @@
-import { REST, Routes } from 'discord.js';
-import { env } from '../config/env.js';
-import { logger } from './logger.js';
+import { REST, Routes } from "discord.js";
+import { config } from "../config/index.js";
+import { logger } from "./logger.js";
 
 export const registerCommands = async (commands) => {
-  const rest = new REST({ version: '10' }).setToken(env.discordToken);
+  const rest = new REST({ version: "10" }).setToken(config.token);
   const body = commands ?? [];
+  const route = config.guildId
+    ? Routes.applicationGuildCommands(config.clientId, config.guildId)
+    : Routes.applicationCommands(config.clientId);
 
   try {
-    await rest.put(Routes.applicationGuildCommands(env.clientId, env.guildId), {
-      body,
+    await rest.put(route, { body });
+    logger.info(`Registered ${body.length} command${body.length === 1 ? "" : "s"}.`, {
+      scope: config.guildId ? "guild" : "global",
     });
-    logger.info(`Registered ${body.length} guild command${body.length === 1 ? '' : 's'}.`);
   } catch (error) {
-    logger.error(
-      `Failed to register commands: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    logger.error("Failed to register commands.", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 };
