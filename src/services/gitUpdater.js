@@ -5,7 +5,14 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  EmbedBuilder,
 } from "discord.js";
+
+const infoEmbed = (description) =>
+  new EmbedBuilder().setColor(0x2b90d9).setDescription(description);
+
+const errorEmbed = (description) =>
+  new EmbedBuilder().setColor(0xd9534f).setDescription(description);
 
 export class GitUpdater {
   constructor({ intervalMs, alertChannelId, ownerIds = [] }) {
@@ -86,7 +93,11 @@ export class GitUpdater {
       );
 
       await channel.send({
-        content: `Update detected on remote (${upstreamSha}). Owners can approve pulling these changes.`,
+        embeds: [
+          infoEmbed(
+            `Update detected on remote (${upstreamSha}). Owners can approve pulling these changes.`
+          ),
+        ],
         components: [row],
       });
 
@@ -111,7 +122,7 @@ export class GitUpdater {
 
     if (!this.isOwner(interaction.user.id)) {
       await interaction.reply({
-        content: "You are not authorized to approve or deny updates.",
+        embeds: [errorEmbed("You are not authorized to approve or deny updates.")],
         ephemeral: true,
       });
       return true;
@@ -119,7 +130,7 @@ export class GitUpdater {
 
     if (sha !== this.pendingUpdateSha) {
       await interaction.reply({
-        content: "This update request is no longer active.",
+        embeds: [errorEmbed("This update request is no longer active.")],
         ephemeral: true,
       });
       return true;
@@ -128,7 +139,7 @@ export class GitUpdater {
     if (action === "deny") {
       this.pendingUpdateSha = null;
       await interaction.update({
-        content: `Update denied by <@${interaction.user.id}> for ${sha}.`,
+        embeds: [infoEmbed(`Update denied by <@${interaction.user.id}> for ${sha}.`)],
         components: [],
       });
       return true;
@@ -136,7 +147,9 @@ export class GitUpdater {
 
     if (action === "confirm") {
       await interaction.update({
-        content: `Update approved by <@${interaction.user.id}> for ${sha}. Pulling now...`,
+        embeds: [
+          infoEmbed(`Update approved by <@${interaction.user.id}> for ${sha}. Pulling now...`),
+        ],
         components: [],
       });
 

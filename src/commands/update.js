@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { config } from "../config/index.js";
 
 const isOwner = (userId) => {
@@ -27,12 +27,17 @@ export const updateCommand = {
         )
     ),
   async execute(interaction) {
+    const infoEmbed = (description) =>
+      new EmbedBuilder().setColor(0x2b90d9).setDescription(description);
+    const errorEmbed = (description) =>
+      new EmbedBuilder().setColor(0xd9534f).setDescription(description);
+
     const subcommand = interaction.options.getSubcommand();
     const updater = interaction.client.gitUpdater;
 
     if (!updater) {
       await interaction.reply({
-        content: "Updater is not configured.",
+        embeds: [errorEmbed("Updater is not configured.")],
         ephemeral: true,
       });
       return;
@@ -40,7 +45,7 @@ export const updateCommand = {
 
     if (!isOwner(interaction.user.id)) {
       await interaction.reply({
-        content: "You are not authorized to run updates.",
+        embeds: [errorEmbed("You are not authorized to run updates.")],
         ephemeral: true,
       });
       return;
@@ -50,7 +55,7 @@ export const updateCommand = {
       const result = await updater.checkNow();
       if (result.error) {
         await interaction.reply({
-          content: "Failed to check for updates. See logs for details.",
+          embeds: [errorEmbed("Failed to check for updates. See logs for details.")],
           ephemeral: true,
         });
         return;
@@ -60,7 +65,7 @@ export const updateCommand = {
         ? `Update available: ${result.upstreamSha}`
         : "No updates available.";
 
-      await interaction.reply({ content: status, ephemeral: true });
+      await interaction.reply({ embeds: [infoEmbed(status)], ephemeral: true });
       return;
     }
 
@@ -68,7 +73,7 @@ export const updateCommand = {
       const confirm = interaction.options.getBoolean("confirm");
       if (!confirm) {
         await interaction.reply({
-          content: "Confirmation is required to apply updates.",
+          embeds: [errorEmbed("Confirmation is required to apply updates.")],
           ephemeral: true,
         });
         return;
@@ -77,14 +82,18 @@ export const updateCommand = {
       const result = await updater.checkNow();
       if (!result.hasUpdate) {
         await interaction.reply({
-          content: "No updates available to apply.",
+          embeds: [infoEmbed("No updates available to apply.")],
           ephemeral: true,
         });
         return;
       }
 
       await interaction.reply({
-        content: "Applying update. The bot will restart if your process manager is configured.",
+        embeds: [
+          infoEmbed(
+            "Applying update. The bot will restart if your process manager is configured."
+          ),
+        ],
         ephemeral: true,
       });
 

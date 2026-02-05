@@ -4,6 +4,8 @@ import { readyEvent } from "./events/ready.js";
 import { interactionCreateEvent } from "./events/interactionCreate.js";
 import { GitUpdater } from "./services/gitUpdater.js";
 import { logger } from "./services/logger.js";
+import { registerCommands } from "./services/registerCommands.js";
+import { commands } from "./commands/index.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -19,6 +21,15 @@ const gitUpdater = new GitUpdater({
 });
 client.gitUpdater = gitUpdater;
 gitUpdater.setClient(client);
+
+try {
+  const payload = commands.map((command) => command.data.toJSON());
+  await registerCommands(payload);
+} catch (error) {
+  logger.warn("Continuing startup without successful command registration.", {
+    error: error?.message,
+  });
+}
 
 gitUpdater.start();
 

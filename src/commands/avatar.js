@@ -114,6 +114,9 @@ const parseAvatarButton = (customId) => {
   return { scope, requesterId, targetUserId };
 };
 
+const errorEmbed = (description) =>
+  new EmbedBuilder().setColor(0xd9534f).setDescription(description);
+
 export const avatarCommand = {
   data: new SlashCommandBuilder()
     .setName("avatar")
@@ -162,7 +165,7 @@ export const avatarCommand = {
 
       if (buttonInteraction.user.id !== payload.requesterId) {
         await buttonInteraction.reply({
-          content: "Only the command requester can use these buttons.",
+          embeds: [errorEmbed("Only the command requester can use these buttons.")],
           ephemeral: true,
         });
         return;

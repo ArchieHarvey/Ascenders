@@ -18,5 +18,6 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 ## Notes
 - Configure `BOT_OWNER_IDS` in `.env` to restrict update commands.
 - Set `UPDATE_ALERT_CHANNEL_ID` to the channel where update approval prompts should be sent.
+- Commands are auto-registered on each bot restart.
 - `/avatar` page buttons expire after 1 minute and are then removed from the message.
 - Use a process manager (PM2, systemd, Docker) to restart the bot after it exits.
