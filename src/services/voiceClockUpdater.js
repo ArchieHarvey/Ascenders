@@ -2,7 +2,7 @@ import { ChannelType, DiscordAPIError } from "discord.js";
 import { logger } from "./logger.js";
 
 export class VoiceClockUpdater {
-  constructor({ channelId, timezone = "UTC", intervalMs = 60_000, namePrefix = "🕒" }) {
+  constructor({ channelId, timezone = "UTC", intervalMs = 60_000, namePrefix = null }) {
     this.channelId = channelId;
     this.timezone = timezone;
     this.intervalMs = intervalMs;
@@ -30,7 +30,46 @@ export class VoiceClockUpdater {
       hour12: false,
     });
 
-    return `${this.namePrefix} ${formatted}`;
+    const prefix = this.namePrefix || this.getClockEmoji(now);
+
+    return `${prefix} ${formatted}`;
+  }
+
+  getClockEmoji(now = new Date()) {
+    const hour = now.getHours() % 12 || 12;
+    const minute = now.getMinutes();
+
+    const hourEmojis = {
+      1: "🕐",
+      2: "🕑",
+      3: "🕒",
+      4: "🕓",
+      5: "🕔",
+      6: "🕕",
+      7: "🕖",
+      8: "🕗",
+      9: "🕘",
+      10: "🕙",
+      11: "🕚",
+      12: "🕛",
+    };
+
+    const halfHourEmojis = {
+      1: "🕜",
+      2: "🕝",
+      3: "🕞",
+      4: "🕟",
+      5: "🕠",
+      6: "🕡",
+      7: "🕢",
+      8: "🕣",
+      9: "🕤",
+      10: "🕥",
+      11: "🕦",
+      12: "🕧",
+    };
+
+    return minute < 30 ? hourEmojis[hour] : halfHourEmojis[hour];
   }
 
   async updateNow() {
