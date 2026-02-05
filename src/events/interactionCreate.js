@@ -4,6 +4,15 @@ import { logger } from "../services/logger.js";
 export const interactionCreateEvent = {
   name: "interactionCreate",
   async execute(interaction) {
+    if (interaction.isButton()) {
+      const handled = await interaction.client.gitUpdater?.handleButtonInteraction(
+        interaction
+      );
+      if (handled) {
+        return;
+      }
+    }
+
     if (!interaction.isChatInputCommand()) {
       return;
     }

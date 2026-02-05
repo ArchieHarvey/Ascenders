@@ -12,8 +12,13 @@ client.on(interactionCreateEvent.name, (...args) =>
   interactionCreateEvent.execute(...args)
 );
 
-const gitUpdater = new GitUpdater({ intervalMs: config.updateCheckIntervalMs });
+const gitUpdater = new GitUpdater({
+  intervalMs: config.updateCheckIntervalMs,
+  alertChannelId: config.updateAlertChannelId,
+  ownerIds: config.ownerIds,
+});
 client.gitUpdater = gitUpdater;
+gitUpdater.setClient(client);
 
 gitUpdater.start();
 
