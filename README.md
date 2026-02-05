@@ -10,6 +10,7 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 - `/restart confirm:true` owner-only bot restart
 - Automatic remote update checks with owner approval buttons in a configured channel
 - Optional voice world clock updater that can rename a voice channel on an interval
+- Optional MongoDB connection layer for persistent data
 
 ## Setup
 1. Copy `.env.example` to `.env` and fill in values.
@@ -24,6 +25,7 @@ A minimal Discord.js bot with a clean structure, basic slash commands, and a git
 - Set `UPDATE_ALERT_CHANNEL_ID` to the channel where update approval prompts should be sent.
 - Set `WORLD_CLOCK_CHANNEL_ID` to a voice channel ID to enable the world clock renamer.
 - Optionally configure `WORLD_CLOCK_TIMEZONE` (IANA TZ like `Asia/Kolkata`), `WORLD_CLOCK_INTERVAL_MS` (default `60000`), and `WORLD_CLOCK_NAME_PREFIX`.
+- Set `MONGODB_URI` to enable MongoDB and `MONGODB_DB_NAME` to choose the database name.
 - Commands are auto-registered on each bot restart.
 - `/avatar` page buttons expire after 1 minute and are then removed from the message.
 - Version bumping depends on git hooks; they auto-install during `npm install` (or you can run `npm run hooks:install` manually).
