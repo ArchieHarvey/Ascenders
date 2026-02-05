@@ -1,6 +1,39 @@
 import { ChannelType, DiscordAPIError } from "discord.js";
 import { logger } from "./logger.js";
 
+
+const HOUR_EMOJIS = {
+  1: "🕐",
+  2: "🕑",
+  3: "🕒",
+  4: "🕓",
+  5: "🕔",
+  6: "🕕",
+  7: "🕖",
+  8: "🕗",
+  9: "🕘",
+  10: "🕙",
+  11: "🕚",
+  12: "🕛",
+};
+
+const HALF_HOUR_EMOJIS = {
+  1: "🕜",
+  2: "🕝",
+  3: "🕞",
+  4: "🕟",
+  5: "🕠",
+  6: "🕡",
+  7: "🕢",
+  8: "🕣",
+  9: "🕤",
+  10: "🕥",
+  11: "🕦",
+  12: "🕧",
+};
+
+const CLOCK_EMOJIS = new Set([...Object.values(HOUR_EMOJIS), ...Object.values(HALF_HOUR_EMOJIS)]);
+
 export class VoiceClockUpdater {
   constructor({ channelId, timezone = "UTC", intervalMs = 60_000, namePrefix = null }) {
     this.channelId = channelId;
@@ -30,46 +63,44 @@ export class VoiceClockUpdater {
       hour12: false,
     });
 
-    const prefix = this.namePrefix || this.getClockEmoji(now);
+    const prefix = this.resolvePrefix(now);
 
     return `${prefix} ${formatted}`;
   }
 
+  resolvePrefix(now = new Date()) {
+    if (!this.namePrefix || this.namePrefix === "auto" || CLOCK_EMOJIS.has(this.namePrefix)) {
+      return this.getClockEmoji(now);
+    }
+
+    return this.namePrefix;
+  }
+
   getClockEmoji(now = new Date()) {
-    const hour = now.getHours() % 12 || 12;
-    const minute = now.getMinutes();
+    const { hour, minute } = this.getTimeParts(now);
 
-    const hourEmojis = {
-      1: "🕐",
-      2: "🕑",
-      3: "🕒",
-      4: "🕓",
-      5: "🕔",
-      6: "🕕",
-      7: "🕖",
-      8: "🕗",
-      9: "🕘",
-      10: "🕙",
-      11: "🕚",
-      12: "🕛",
+    return minute < 30 ? HOUR_EMOJIS[hour] : HALF_HOUR_EMOJIS[hour];
+  }
+
+  getTimeParts(now = new Date()) {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: this.timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(now);
+    const hourPart = parts.find((part) => part.type === "hour")?.value;
+    const minutePart = parts.find((part) => part.type === "minute")?.value;
+    const hour24 = Number(hourPart);
+    const minute = Number(minutePart);
+    const normalizedHour = hour24 % 12 || 12;
+
+    return {
+      hour: Number.isFinite(normalizedHour) ? normalizedHour : 12,
+      minute: Number.isFinite(minute) ? minute : 0,
     };
-
-    const halfHourEmojis = {
-      1: "🕜",
-      2: "🕝",
-      3: "🕞",
-      4: "🕟",
-      5: "🕠",
-      6: "🕡",
-      7: "🕢",
-      8: "🕣",
-      9: "🕤",
-      10: "🕥",
-      11: "🕦",
-      12: "🕧",
-    };
-
-    return minute < 30 ? hourEmojis[hour] : halfHourEmojis[hour];
   }
 
   async updateNow() {
