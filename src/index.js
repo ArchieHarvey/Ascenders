@@ -5,6 +5,7 @@ import { interactionCreateEvent } from "./events/interactionCreate.js";
 import { GitUpdater } from "./services/gitUpdater.js";
 import { logger } from "./services/logger.js";
 import { registerCommands } from "./services/registerCommands.js";
+import { VoiceClockUpdater } from "./services/voiceClockUpdater.js";
 import { commands } from "./commands/index.js";
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -22,6 +23,14 @@ const gitUpdater = new GitUpdater({
 client.gitUpdater = gitUpdater;
 gitUpdater.setClient(client);
 
+const voiceClockUpdater = new VoiceClockUpdater({
+  channelId: config.worldClockChannelId,
+  timezone: config.worldClockTimezone,
+  intervalMs: config.worldClockIntervalMs,
+  namePrefix: config.worldClockNamePrefix,
+});
+voiceClockUpdater.setClient(client);
+
 try {
   const payload = commands.map((command) => command.data.toJSON());
   await registerCommands(payload);
@@ -32,6 +41,7 @@ try {
 }
 
 gitUpdater.start();
+voiceClockUpdater.start();
 
 client.login(config.token).catch((error) => {
   logger.error("Failed to login.", { error: error?.message });
